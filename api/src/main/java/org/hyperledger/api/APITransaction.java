@@ -105,6 +105,7 @@ public class APITransaction extends Transaction {
         }
         if (blockID != null) {
             builder.setBlock(ByteString.copyFrom(blockID.unsafeGetArray()));
+            builder.setHasBlock(true);
         }
         return builder.build();
     }
@@ -129,7 +130,7 @@ public class APITransaction extends Transaction {
             }
         }
 
-        if (pt.hasBlock()) {
+        if (pt.getHasBlock()) {
             builder.blockID(new BID(pt.getBlock().toByteArray()));
         }
 

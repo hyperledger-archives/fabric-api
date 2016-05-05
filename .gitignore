@@ -13,7 +13,7 @@ data-*
 **/dependency-reduced-pom.xml
 .DS_Store
 tags
-
+*.rej
 coverageReports
 **/logs
 

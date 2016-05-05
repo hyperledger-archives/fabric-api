@@ -345,7 +345,7 @@ public class Block {
             } else {
                 builder.addTransactions(BCSAPIMessage.MerkleNode.newBuilder().setHash(
                         ByteString.copyFrom(n.getID().unsafeGetArray())
-                ));
+                ).setHasHash(true));
             }
         }
         return builder.build();

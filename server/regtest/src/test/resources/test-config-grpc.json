@@ -1,0 +1,53 @@
+{
+  "akka": {
+    "loglevel": "DEBUG"
+  },
+  "hyperledger": {
+    "p2p": {
+      "outgoingConnections": 1
+    },
+    "blockchain": {
+      "chain": "regtest"
+    },
+    "store": {
+      "memory": true,
+      "pruning": {
+        "enabled": false,
+        "pruneAfterEvery": 20,
+        "pruneOnlyLowerThanHeight": -1,
+        "doNotPruneTopBlocks": 5,
+        "pruneFrom": 0
+      }
+    },
+    "network": {
+
+      "bindAddress": "0.0.0.0",
+      "bindPort": 18440,
+
+      "outgoingConnections": 0,
+
+      "discovery": [
+        {
+          "type": "fixed",
+          "peers": [
+          ]
+        }
+      ]
+    },
+    "mining": {
+      "enabled": false,
+      "__comment__": "address generated for private key: Kxj5wXRXPxVZScsHkK6Dwo2k7enphcW9wWidvZ93wTALHDXjDo2U",
+      "minerAddress": "1CNABTVtwxFQBTvazuGfxhT87sfssmFbdE"
+    },
+    "blockSignature": {
+      "enabled": false
+    }
+  },
+  "gRPCConnectedHyperLedger": {
+    "grpc": {
+      "host": "127.0.0.1",
+      "port": "30303",
+      "observerPort": "31315"
+    }
+  }
+}

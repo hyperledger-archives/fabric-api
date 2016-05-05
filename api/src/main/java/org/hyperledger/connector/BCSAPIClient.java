@@ -569,6 +569,7 @@ public class BCSAPIClient implements BCSAPI {
             BCSAPIMessage.BLKIDSREQ.Builder builder = BCSAPIMessage.BLKIDSREQ.newBuilder();
             if (blockId != null) {
                 builder.setBlockHash(ByteString.copyFrom(blockId.unsafeGetArray()));
+                builder.setHasBlockHash(true);
             }
             if (count <= 0) count = 20;
             builder.setCount(count);
@@ -578,7 +579,7 @@ public class BCSAPIClient implements BCSAPI {
                 BCSAPIMessage.BLKIDS message = BCSAPIMessage.BLKIDS.parseFrom(response);
                 List<ByteString> blockIdsList = message.getBlockIdsList();
                 List<BID> blockIds = blockIdsList.stream().map(bs -> new BID(bs.toByteArray())).collect(Collectors.toList());
-                return new APIBlockIdList(blockIds, message.getHeight(), message.hasPreviousBlockId() ? new BID(message.getPreviousBlockId().toByteArray()) : null);
+                return new APIBlockIdList(blockIds, message.getHeight(), message.getHasPreviousBlockId() ? new BID(message.getPreviousBlockId().toByteArray()) : null);
             }
         } catch (ConnectorException | InvalidProtocolBufferException e) {
             throw new BCSAPIException(e);

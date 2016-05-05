@@ -62,6 +62,7 @@ public class APIHeader implements Header {
         builder.setPreviousBlock(ByteString.copyFrom(getPreviousID().unsafeGetArray()));
         if (height >= 0) {
             builder.setHeight(height);
+            builder.setHasHeight(true);
         }
         return builder.build();
     }
@@ -75,7 +76,7 @@ public class APIHeader implements Header {
         builder.createTime(pb.getTimestamp());
         builder.previousID(BID.createFromSafeArray(pb.getPreviousBlock().toByteArray()));
         builder.merkleRoot(MerkleRoot.createFromSafeArray(pb.getMerkleRoot().toByteArray()));
-        if (pb.hasHeight()) {
+        if (pb.getHasHeight()) {
             builder.height(pb.getHeight());
         }
         return builder.build();

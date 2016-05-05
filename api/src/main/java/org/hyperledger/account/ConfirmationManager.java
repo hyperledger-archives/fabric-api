@@ -41,8 +41,7 @@ public class ConfirmationManager implements TrunkListener {
             Collections.copy(trunk, inventory);
         }
         api.catchUp(trunk, trunkLength, true, this);
-        APIHeader highest = api.getBlockHeader(trunk.getFirst());
-        height = highest.getHeight();
+        height = api.getChainHeight();
         api.registerTrunkListener(this);
     }
 

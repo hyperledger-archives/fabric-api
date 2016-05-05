@@ -130,17 +130,18 @@ public class APIBlock extends Block {
         for (MerkleTreeNode n : getMerkleTreeNodes()) {
             if (n instanceof Transaction) {
                 builder.addTransactions(BCSAPIMessage.MerkleNode.newBuilder().setTransaction(
-                        ((Transaction) n).toBCSAPIMessage()
+                        ((Transaction) n). toBCSAPIMessage()
                 ));
             } else {
                 byte[] hash = Arrays.copyOf(n.getID().unsafeGetArray(), 33);
                 hash[32] = (byte) (n.getMerkleHeight() & 0xff);
                 builder.addTransactions(BCSAPIMessage.MerkleNode.newBuilder()
-                        .setHash(ByteString.copyFrom(hash)));
+                        .setHash(ByteString.copyFrom(hash)).setHasHash(true));
             }
         }
         if (getHeight() >= 0) {
             builder.setHeight(getHeight());
+            builder.setHasHeight(true);
         }
         return builder.build();
     }
@@ -156,14 +157,14 @@ public class APIBlock extends Block {
         if (pb.getTransactionsCount() > 0) {
             builder.transactions(new ArrayList<>());
             for (BCSAPIMessage.MerkleNode n : pb.getTransactionsList()) {
-                if (n.hasHash()) {
+                if (n.getHasHash()) {
                     byte[] hash = Arrays.copyOf(n.getHash().toByteArray(), 33);
                     builder.merkleNodes(new PrunedNode(Hash.createFromSafeArray(Arrays.copyOf(hash, 32)), hash[33]));
                 } else
                     builder.transactions(APITransaction.fromProtobuf(n.getTransaction()));
             }
         }
-        if (pb.hasHeight()) {
+        if (pb.getHasHeight()) {
             builder.height(pb.getHeight());
         }
         return builder.build();

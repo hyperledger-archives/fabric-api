@@ -114,6 +114,7 @@ public class ColoredTransactionOutput extends TransactionOutput {
         builder.setScript(ByteString.copyFrom(getScript().toByteArray()));
         builder.setValue(getValue());
         builder.setColor(ByteString.copyFrom(getColor().getEncoded()));
+        builder.setHasColor(true);
         builder.setQuantity(getQuantity());
         return builder.build();
     }

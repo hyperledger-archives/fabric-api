@@ -104,7 +104,7 @@ public class TransactionOutput {
     }
 
     public static TransactionOutput fromProtobuf(BCSAPIMessage.TXOUT po) throws HyperLedgerException {
-        if (po.hasColor()) {
+        if (po.getHasColor()) {
             return new ColoredTransactionOutput(po.getValue(),
                     new Script(po.getScript().toByteArray()),
                     Color.fromEncoded(po.getColor().toByteArray()), po.getQuantity());

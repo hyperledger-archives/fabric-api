@@ -32,6 +32,7 @@
         <module>api</module>
         <module>jms</module>
         <module>jackson</module>
+        <module>examples</module>
     </modules>
 
     <properties>
@@ -50,7 +51,8 @@
         <scalacheck.version>1.12.4</scalacheck.version>
         <scalamock.version>3.2</scalamock.version>
         <bouncycastle.version>1.52</bouncycastle.version>
-        <protobuf.version>2.5.0</protobuf.version>
+        <protobuf.version>3.0.0-beta-2</protobuf.version>
+        <grpc.version>0.13.1</grpc.version>
         <leveldbjni.version>1.8</leveldbjni.version>
         <scijava.version>2.1.0</scijava.version>
         <jna.version>4.2.1</jna.version>
@@ -216,6 +218,11 @@
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
                 <version>${protobuf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-all</artifactId>
+                <version>${grpc.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.activemq</groupId>
