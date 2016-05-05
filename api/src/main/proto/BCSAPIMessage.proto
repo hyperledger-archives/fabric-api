@@ -1,0 +1,122 @@
+package org.hyperledger.api;
+
+message Script {
+    required bytes script = 1;
+}
+
+message Ping {
+    required uint64 nonce = 1;
+    optional string clientVersion = 2;
+    optional string serverVersion = 3;
+}
+
+message Alert {
+    required string alert = 1;
+    required uint32 severity = 2; // 0: info, 1: warning, 2: error
+}
+
+// input point of a transaction. 
+message TXIN {
+    required bytes source = 1; // source transaction hash
+    required uint32 sourceix = 2; // index of the output in the source stransaction
+    required uint32 sequence = 3; // higher wins
+    required bytes script = 4; // inputs to the script of the transaction output
+}
+
+// output point of a transaction. 
+message TXOUT {
+    required uint64 value = 1; // value that can be claimed ...
+    required bytes script = 2; // ... if satisfying this output script
+    optional bytes color = 3;
+    optional uint64 quantity = 4;
+}
+
+// a transaction.
+message TX {
+    required uint32 version = 1;
+    required uint32 locktime = 2; // block number or time this is valid from
+    repeated TXIN inputs = 3;
+    repeated TXOUT outputs = 4;
+    optional bytes block = 5;
+}
+
+
+
+message TXS {
+    repeated OPTIONAL_TX txs = 1;
+}
+
+message OPTIONAL_TX {
+    optional bool isNull = 1 [default = false];
+    optional TX transaction = 2;
+}
+
+message MerkleNode {
+    optional TX transaction = 1;
+    optional bytes hash = 2; // suffixed with one byte heigh
+}
+
+// a block.
+// matches the P2P Bitcoin protocol message
+message BLK {
+    required uint32 version = 1;
+    required bytes previousBlock = 2; // previos block hash
+    required bytes merkleRoot = 3; // block content hash tree root
+    required uint32 timestamp = 4; // the block was mined at
+    required uint32 difficulty = 5; // encoded difficulty for POW
+    required uint32 nonce = 6; // parameter of POW
+    repeated MerkleNode transactions = 7;
+    optional uint32 height = 8;
+}
+
+// chain height
+message HEIGHT {
+    required uint32 height = 1;
+}
+
+// block ids request
+message BLKIDSREQ {
+    optional bytes blockHash  = 1; // block hash to start from
+    required uint32 count = 2; // the number of blocks to list
+}
+
+message BLKIDS {
+    repeated bytes blockIds  = 1; // block hash to start from
+    optional bytes previousBlockId = 2; // id of the block after the block ids
+    required uint32 height = 3; // height of the first block in the block ids
+}
+
+message Hash {
+    repeated bytes hash = 1;
+}
+
+message CatchUpRequest {
+    required uint32 limit = 1;
+    required bool headers = 2;
+    repeated bytes inventory = 3;
+}
+
+message TrunkUpdate {
+    repeated BLK added = 1;
+}
+
+message ExceptionMessage {
+    repeated string message = 1;
+}
+
+message ExactMatchRequest {
+    repeated bytes match = 1;
+    optional uint64 after = 2;
+}
+
+message AccountRequest {
+    required string publicKey = 1;
+    required uint32 lookAhead = 2;
+}
+
+message Reject {
+    required string command = 1;
+    required string reason = 2;
+    required uint32 rejectCode = 3;
+    optional bytes hash = 4;
+}
