@@ -119,9 +119,5 @@
             <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.hyperledger</groupId>
-            <artifactId>hyperledger-client-nativelibs</artifactId>
-        </dependency>
-    </dependencies>
+     </dependencies>
 </project>
