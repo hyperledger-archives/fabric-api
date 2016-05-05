@@ -1,6 +1,5 @@
 data
 *.iml
-.idea
 atlassian-ide-plugin.xml
 target
 *.versionsBackup
