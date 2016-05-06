@@ -16,4 +16,5 @@ tags
 *.rej
 coverageReports
 **/logs
-
+*.so
+*.dylib

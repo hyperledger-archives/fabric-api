@@ -16,8 +16,8 @@ package org.hyperledger.examples.dropwizard;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import org.hyperledger.dropwizard.EmbeddedHyperLedger;
-import org.hyperledger.dropwizard.grpc.GRPCConnectedHyperLedger;
 import org.hyperledger.dropwizard.HyperLedgerConfiguration;
+import org.hyperledger.org.hyperledger.fabric.GRPCConnectedHyperLedger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

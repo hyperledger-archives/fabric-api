@@ -32,7 +32,7 @@
         <module>api</module>
         <module>jms</module>
         <module>jackson</module>
-        <module>examples</module>
+        <module>native</module>
     </modules>
 
     <properties>
@@ -70,7 +70,6 @@
         <junit.version>4.12</junit.version>
         <scijava.version>2.1.1</scijava.version>
         <jna.version>4.2.1</jna.version>
-        <secpbinding.version>1.0.0</secpbinding.version>
         <commons.math3.version>3.6</commons.math3.version>
     </properties>
 
@@ -94,7 +93,7 @@
             <dependency>
                 <groupId>org.hyperledger</groupId>
                 <artifactId>secp-binding</artifactId>
-                <version>${secpbinding.version}</version>
+                <version>${project.version}</version>
                 <type>jar</type>
             </dependency>
             <dependency>
