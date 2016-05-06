@@ -39,7 +39,7 @@ import protos.Chaincode.ChaincodeSpec;
 import protos.DevopsGrpc;
 import protos.DevopsGrpc.DevopsBlockingStub;
 
-import protos.Openchain;
+import protos.Fabric;
 import protos.OpenchainGrpc;
 import protos.OpenchainGrpc.OpenchainBlockingStub;
 import protos.Api.BlockCount;
@@ -106,7 +106,7 @@ public class GRPCClient implements BCSAPI {
                 .setChaincodeSpec(chaincodeSpec)
                 .build();
 
-        Openchain.Response response = dbs.query(chaincodeInvocationSpec);
+        Fabric.Response response = dbs.query(chaincodeInvocationSpec);
 
         return response.getMsg();
     }

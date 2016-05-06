@@ -50,6 +50,15 @@ Version numbers below indicate the versions used.
  * ```cd hyperledger```
  * ```mvn clean package```
 
+#### Building secp256 library
+ * clone https://github.com/bitcoin-core/secp256k1
+ * ./autgen.sh
+ * ./configure --enable-module-schnorr --enable-experimental --enable-module-ecdh
+ * make
+ * copy resulting binary (.libs/libsecp256k1.dylib) to fabric-api/native/src/main/resources/x86_64-MacOSX-gpp/lib/ for OSX
+ * copy resulting binary (.libs/libsecp256k1.dylib) to fabric-api/native/src/main/resources/amd64-Linux-gpp/lib/libsecp256k1.so for Linux
+  
+
 ## Documentation
  * [API](docs/api.md) (low level API)
  * [Account](docs/accountmodule.md) (high level API)
