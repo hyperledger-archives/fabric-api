@@ -15,19 +15,16 @@
 package org.hyperledger.connector;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.Channel;
 import io.grpc.stub.StreamObserver;
 import org.hyperledger.api.APITransaction;
-import org.hyperledger.api.BCSAPIMessage;
 import org.hyperledger.api.TransactionListener;
 import org.hyperledger.common.BID;
-import org.hyperledger.common.ByteUtils;
 import org.hyperledger.common.HyperLedgerException;
 import org.hyperledger.common.WireFormatter;
 import protos.Chaincode;
-import protos.OpenchainEventsGrpc;
-import protos.Events;
+import protos.EventsGrpc;
+import protos.EventsOuterClass;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
@@ -35,17 +32,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class GRPCObserver {
-    private OpenchainEventsGrpc.OpenchainEventsStub es;
+    private EventsGrpc.EventsStub es;
     private Set<TransactionListener> listeners = new HashSet<>();
 
     public GRPCObserver(Channel eventsChannel) {
-        es = OpenchainEventsGrpc.newStub(eventsChannel);
+        es = EventsGrpc.newStub(eventsChannel);
     }
 
     public void connect() {
-        StreamObserver<Events.OpenchainEvent> receiver = new StreamObserver<Events.OpenchainEvent>() {
+        StreamObserver<EventsOuterClass.Event> receiver = new StreamObserver<EventsOuterClass.Event>() {
             @Override
-            public void onNext(Events.OpenchainEvent openchainEvent) {
+            public void onNext(EventsOuterClass.Event openchainEvent) {
                 listeners.forEach((listener) -> {
                     try {
                         ByteString invocationSpecBytes = openchainEvent.getBlock().getTransactions(0).getPayload();
@@ -72,18 +69,18 @@ public class GRPCObserver {
             }
         };
 
-        StreamObserver<Events.OpenchainEvent> sender = es.chat(receiver);
+        StreamObserver<EventsOuterClass.Event> sender = es.chat(receiver);
 
-        Events.Interest interest = Events.Interest.newBuilder()
+        EventsOuterClass.Interest interest = EventsOuterClass.Interest.newBuilder()
                 .setEventType("block")
-                .setResponseType(Events.Interest.ResponseType.PROTOBUF)
+                .setResponseType(EventsOuterClass.Interest.ResponseType.PROTOBUF)
                 .build();
 
-        Events.Register register = Events.Register.newBuilder()
+        EventsOuterClass.Register register = EventsOuterClass.Register.newBuilder()
                 .addEvents(0, interest)
                 .build();
 
-        Events.OpenchainEvent registerEvent = Events.OpenchainEvent.newBuilder()
+        EventsOuterClass.Event registerEvent = EventsOuterClass.Event.newBuilder()
                 .setRegister(register)
                 .build();
 
