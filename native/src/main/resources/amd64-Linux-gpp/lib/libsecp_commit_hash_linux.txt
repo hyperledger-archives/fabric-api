@@ -1,1 +1,0 @@
-The library was built from https://github.com/bitcoin/secp256k1 commit ???
