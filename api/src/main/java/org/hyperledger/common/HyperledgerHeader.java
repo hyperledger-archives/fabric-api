@@ -13,26 +13,25 @@
  */
 package org.hyperledger.common;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Objects;
 
-public class BitcoinHeader implements Header {
+public class HyperledgerHeader implements Header {
     private BID ID;
     private final BID previousID;
     private final MerkleRoot merkleRoot;
     private final int createTime;
 
-    public BitcoinHeader(BID previousID, MerkleRoot merkleRoot, int createTime) {
+    public HyperledgerHeader(BID previousID, MerkleRoot merkleRoot, int createTime) {
         this.previousID = previousID;
         this.merkleRoot = merkleRoot;
         this.createTime = createTime;
     }
 
-    public static BitcoinHeader.Builder create() {
-        return new BitcoinHeader.Builder();
+    public static HyperledgerHeader.Builder create() {
+        return new HyperledgerHeader.Builder();
     }
 
     public static class Builder extends HeaderBuilder<Builder> {
@@ -40,8 +39,8 @@ public class BitcoinHeader implements Header {
             super();
         }
 
-        public BitcoinHeader build() {
-            return new BitcoinHeader(previousID, merkleRoot, createTime);
+        public HyperledgerHeader build() {
+            return new HyperledgerHeader(previousID, merkleRoot, createTime);
         }
     }
 
@@ -106,7 +105,7 @@ public class BitcoinHeader implements Header {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        BitcoinHeader header = (BitcoinHeader) o;
+        HyperledgerHeader header = (HyperledgerHeader) o;
         return Objects.equals(getID(), header.getID());
     }
 

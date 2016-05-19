@@ -23,8 +23,8 @@ public interface TransactionListener {
     /**
      * Process a transaction
      *
-     * @param t a transaction wrapped into an HyperledgerTransaction that also carries the block ID if available
-     * @throws HyperledgerException
+     * @param t a transaction wrapped into an HLAPITransaction that also carries the block ID if available
+     * @throws HLAPIException
      */
-    void process(HyperledgerTransaction t) throws HyperledgerException;
+    void process(HLAPITransaction t) throws HLAPIException;
 }

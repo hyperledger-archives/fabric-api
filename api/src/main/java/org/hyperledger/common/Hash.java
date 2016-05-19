@@ -181,10 +181,10 @@ public class Hash {
     }
 
     /**
-     * Convert a Hash into a big positive integer. See BitcoinHeader for its use for proof-of-work.
+     * Convert a Hash into a big positive integer. See HyperledgerHeader for its use for proof-of-work.
      *
      * @return Hash as big positive integer
-     * @see BitcoinHeader
+     * @see HyperledgerHeader
      */
     public BigInteger toBigInteger() {
         return new BigInteger(1, ByteUtils.reverse(toByteArray()));

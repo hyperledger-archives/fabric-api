@@ -16,22 +16,22 @@ package org.hyperledger.api;
 /**
  * An exception from the HyperLedger block Chain Server or a problem communicating with it.
  */
-public class HyperledgerException extends Exception {
+public class HLAPIException extends Exception {
     private static final long serialVersionUID = -816029891683622613L;
 
-    public HyperledgerException() {
+    public HLAPIException() {
         super();
     }
 
-    public HyperledgerException(String arg0, Throwable arg1) {
+    public HLAPIException(String arg0, Throwable arg1) {
         super(arg0, arg1);
     }
 
-    public HyperledgerException(String arg0) {
+    public HLAPIException(String arg0) {
         super(arg0);
     }
 
-    public HyperledgerException(Throwable arg0) {
+    public HLAPIException(Throwable arg0) {
         super(arg0);
     }
 

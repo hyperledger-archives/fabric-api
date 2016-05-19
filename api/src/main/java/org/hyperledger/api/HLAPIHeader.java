@@ -17,11 +17,11 @@ import org.hyperledger.common.*;
 
 import java.time.LocalTime;
 
-public class HyperledgerHeader implements Header {
+public class HLAPIHeader implements Header {
     private final int height;
     private final Header header;
 
-    public HyperledgerHeader(Header header, int height) {
+    public HLAPIHeader(Header header, int height) {
         this.header = header;
         this.height = height;
     }
@@ -41,8 +41,8 @@ public class HyperledgerHeader implements Header {
             return this;
         }
 
-        public HyperledgerHeader build() {
-            return new HyperledgerHeader(new BitcoinHeader(previousID, merkleRoot, createTime), height);
+        public HLAPIHeader build() {
+            return new HLAPIHeader(new HyperledgerHeader(previousID, merkleRoot, createTime), height);
         }
     }
 

@@ -20,20 +20,20 @@ import java.util.List;
 /**
  * This is the low level API to the HyperLedger block chain server
  */
-public interface Hyperledger {
+public interface HLAPI {
     /**
      * retrieves client version
      *
      * @return client version e.g. 4.0.0
      */
-    String getClientVersion() throws HyperledgerException;
+    String getClientVersion() throws HLAPIException;
 
     /**
      * retrieves server version
      *
      * @return server version e.g. 4.0.0
      */
-    String getServerVersion() throws HyperledgerException;
+    String getServerVersion() throws HLAPIException;
 
     /**
      * Returns nounce while doing a full roundtrip to the server.
@@ -42,9 +42,9 @@ public interface Hyperledger {
      *
      * @param nonce - random nonce
      * @return the same nonce
-     * @throws HyperledgerException
+     * @throws HLAPIException
      */
-    long ping(long nonce) throws HyperledgerException;
+    long ping(long nonce) throws HLAPIException;
 
     /**
      * Sets the alert listener for the connections.
@@ -53,53 +53,53 @@ public interface Hyperledger {
      * a key satoshi left to some developer.
      *
      * @param listener - an alert listener
-     * @throws HyperledgerException
+     * @throws HLAPIException
      */
-    void addAlertListener(AlertListener listener) throws HyperledgerException;
+    void addAlertListener(AlertListener listener) throws HLAPIException;
 
     void removeAlertListener(AlertListener listener);
 
     /**
      * Get chain height of the trunk list
      *
-     * @throws HyperledgerException
+     * @throws HLAPIException
      */
-    int getChainHeight() throws HyperledgerException;
+    int getChainHeight() throws HLAPIException;
 
     /**
      * Get block header for the hash
      *
      * @param hash - block hash
      * @return block header or null if hash is unknown
-     * @throws HyperledgerException
+     * @throws HLAPIException
      */
-    HyperledgerHeader getBlockHeader(BID hash) throws HyperledgerException;
+    HLAPIHeader getBlockHeader(BID hash) throws HLAPIException;
 
     /**
      * Get block for the hash
      *
      * @param hash - block hash
      * @return block or null if hash is unknown
-     * @throws HyperledgerException
+     * @throws HLAPIException
      */
-    HyperledgerBlock getBlock(BID hash) throws HyperledgerException;
+    HLAPIBlock getBlock(BID hash) throws HLAPIException;
 
     /**
      * Get the transaction identified by the hash, if it is on the current trunk (longest chain)
      *
      * @param hash - transaction hash (id)
      * @return transaction or null if no transaction with that hash on the trunk
-     * @throws HyperledgerException
+     * @throws HLAPIException
      */
-    HyperledgerTransaction getTransaction(TID hash) throws HyperledgerException;
+    HLAPITransaction getTransaction(TID hash) throws HLAPIException;
 
     /**
      * Send a signed transaction to the network.
      *
      * @param transaction - a signed transaction
-     * @throws HyperledgerException
+     * @throws HLAPIException
      */
-    void sendTransaction(Transaction transaction) throws HyperledgerException;
+    void sendTransaction(Transaction transaction) throws HLAPIException;
 
     /**
      * Register a reject message listener.
@@ -107,9 +107,9 @@ public interface Hyperledger {
      * It could be an indication of a problem on this end, but it might be byzantine behaviour of the other.
      *
      * @param rejectListener - a reject listener
-     * @throws HyperledgerException
+     * @throws HLAPIException
      */
-    void registerRejectListener(RejectListener rejectListener) throws HyperledgerException;
+    void registerRejectListener(RejectListener rejectListener) throws HLAPIException;
 
     /**
      * Remove a reject listener
@@ -122,18 +122,18 @@ public interface Hyperledger {
      * Send a block newly created by this node.
      *
      * @param block - a new valid block
-     * @throws HyperledgerException
+     * @throws HLAPIException
      */
-    void sendBlock(Block block) throws HyperledgerException;
+    void sendBlock(Block block) throws HLAPIException;
 
     /**
      * Register a transactions listener.
      * All valid transactions observed on the network will be forwarded to this listener.
      *
      * @param listener will be called for every validated transaction
-     * @throws HyperledgerException
+     * @throws HLAPIException
      */
-    void registerTransactionListener(TransactionListener listener) throws HyperledgerException;
+    void registerTransactionListener(TransactionListener listener) throws HLAPIException;
 
     /**
      * Remove a listener for validated transactions
@@ -147,9 +147,9 @@ public interface Hyperledger {
      * All validated new blocks on the network, that extend the longest chain, will be forwarded to this listener.
      *
      * @param listener will be called for every validated new block
-     * @throws HyperledgerException
+     * @throws HLAPIException
      */
-    void registerTrunkListener(TrunkListener listener) throws HyperledgerException;
+    void registerTrunkListener(TrunkListener listener) throws HLAPIException;
 
     /**
      * remove a trunk listener previously registered
@@ -169,7 +169,7 @@ public interface Hyperledger {
      * @param limit     maximum number of blocks or header expected, if inventory is empty
      * @param headers   indicate if headers or full blocks are expected
      * @param listener  a listener for trunk extensions
-     * @throws HyperledgerException
+     * @throws HLAPIException
      */
-    void catchUp(List<BID> inventory, int limit, boolean headers, TrunkListener listener) throws HyperledgerException;
+    void catchUp(List<BID> inventory, int limit, boolean headers, TrunkListener listener) throws HLAPIException;
 }

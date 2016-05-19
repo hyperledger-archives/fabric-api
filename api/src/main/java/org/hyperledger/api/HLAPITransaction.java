@@ -20,11 +20,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class HyperledgerTransaction extends Transaction {
+public class HLAPITransaction extends Transaction {
 
     private final BID blockID;
 
-    public HyperledgerTransaction(Transaction transaction, BID blockID) {
+    public HLAPITransaction(Transaction transaction, BID blockID) {
         super(transaction.getID());
         this.blockID = blockID;
     }

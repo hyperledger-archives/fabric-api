@@ -25,5 +25,5 @@ public interface TrunkListener {
      *
      * @param added blocks
      */
-    void trunkUpdate(List<HyperledgerBlock> added);
+    void trunkUpdate(List<HLAPIBlock> added);
 }

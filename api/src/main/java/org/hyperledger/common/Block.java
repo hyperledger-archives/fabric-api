@@ -20,13 +20,13 @@ import java.util.List;
 
 /**
  * A block of the ledger.
- * It consists a BitcoinHeader and a list of Transaction
+ * It consists a HyperledgerHeader and a list of Transaction
  * <p>
  * Some or all transactions might have been pruned, that is removed and replaced with MerkleTree nodes
  * that prove that the merkle tree (@Link https://en.wikipedia.org/wiki/Merkle_tree) root of the block header is valid even if some transactions are no
  * longer available.
  *
- * @see BitcoinHeader
+ * @see HyperledgerHeader
  * @see Transaction
  * @see MerkleTreeNode
  */
@@ -83,7 +83,7 @@ public class Block {
      * block builder helper class
      */
     public static class Builder {
-        private static final Header INVALID_HEADER = ((BitcoinHeader.Builder) BitcoinHeader.create().previousID(BID.INVALID)).build();
+        private static final Header INVALID_HEADER = ((HyperledgerHeader.Builder) HyperledgerHeader.create().previousID(BID.INVALID)).build();
         protected List<Transaction> transactions = new ArrayList<>();
         private Header header = INVALID_HEADER;
 
@@ -104,7 +104,7 @@ public class Block {
 
         public Block build() {
             if (MerkleRoot.INVALID.equals(header.getMerkleRoot())) {
-                    header = new BitcoinHeader(header.getPreviousID(), MerkleTree.computeMerkleRoot(transactions), header.getCreateTime());
+                    header = new HyperledgerHeader(header.getPreviousID(), MerkleTree.computeMerkleRoot(transactions), header.getCreateTime());
             }
             return new Block(header, transactions);
         }
