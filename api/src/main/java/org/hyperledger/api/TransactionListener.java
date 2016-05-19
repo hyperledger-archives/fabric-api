@@ -13,7 +13,6 @@
  */
 package org.hyperledger.api;
 
-import org.hyperledger.common.HyperLedgerException;
 
 /**
  * Listener interface for transactions sent by the server.
@@ -24,8 +23,8 @@ public interface TransactionListener {
     /**
      * Process a transaction
      *
-     * @param t a transaction wrapped into an APITransaction that also carries the block ID if available
-     * @throws HyperLedgerException
+     * @param t a transaction wrapped into an HyperledgerTransaction that also carries the block ID if available
+     * @throws HyperledgerException
      */
-    void process(APITransaction t) throws HyperLedgerException;
+    void process(HyperledgerTransaction t) throws HyperledgerException;
 }

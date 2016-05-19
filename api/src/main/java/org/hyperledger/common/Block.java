@@ -13,11 +13,6 @@
  */
 package org.hyperledger.common;
 
-import com.google.protobuf.ByteString;
-import org.hyperledger.HyperLedgerSettings;
-import org.hyperledger.api.BCSAPIMessage;
-
-import java.io.IOException;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -109,13 +104,7 @@ public class Block {
 
         public Block build() {
             if (MerkleRoot.INVALID.equals(header.getMerkleRoot())) {
-                // instanceof check must happen with subclass first
-                if (header instanceof HeaderWithSignatures) {
-                    HeaderWithSignatures hws = (HeaderWithSignatures) header;
-                    header = new HeaderWithSignatures(hws.getVersion(), hws.getPreviousID(), MerkleTree.computeMerkleRoot(transactions), hws.getCreateTime(), hws.getEncodedDifficulty(), hws.getNonce(), hws.getInScript(), hws.getNextScriptHash());
-                } else {
-                    header = new BitcoinHeader(header.getVersion(), header.getPreviousID(), MerkleTree.computeMerkleRoot(transactions), header.getCreateTime(), header.getEncodedDifficulty(), header.getNonce());
-                }
+                    header = new BitcoinHeader(header.getPreviousID(), MerkleTree.computeMerkleRoot(transactions), header.getCreateTime());
             }
             return new Block(header, transactions);
         }
@@ -135,14 +124,7 @@ public class Block {
         return header.getID();
     }
 
-    /**
-     * @return block version
-     */
-    public int getVersion() {
-        return header.getVersion();
-    }
-
-    /**
+     /**
      * @return pointer to the previous block, this creates the block chain
      */
     public BID getPreviousID() {
@@ -181,33 +163,6 @@ public class Block {
         return header.getLocalCreateTime();
     }
 
-    /**
-     * The difficulty of proof-of-work (POW). This is a big integer encoded in a 32 bits.
-     * The blocks's hash if also interpreted as a big integer must be lower than this.
-     * <p>
-     * For the curious, POW is valid if:
-     * <code>
-     * getID().toBigInteger().compareTo(BigInteger.valueOf(getEncodedDifficulty() & 0x7fffffL).shiftLeft((int) (8 * ((getEncodedDifficulty() >>> 24) - 3)))) <= 0
-     * </code>
-     *
-     * @return the encoded POW difficulty
-     */
-    public int getDifficultyTarget() {
-        return header.getEncodedDifficulty();
-    }
-
-    /**
-     * Nonce for the miner that performs the POW. Unfortunately Satoshi used a 32 bit integer for the purpose,
-     * that is insufficient at least since 2012. Miner that work faster than a few GH/s must also roll some
-     * other content of the header, preferably including new transactions that change the merkle root.
-     * The insufficient size of this is the reason for the inaccuracy of the time stamp as many miner misuse
-     * the time stamp for an extension of this nonce.
-     *
-     * @return nonce - no meaning besides quantifying Satoshi's fortune, see @Link https://bitslog.wordpress.com/2013/04/17/the-well-deserved-fortune-of-satoshi-nakamoto/
-     */
-    public int getNonce() {
-        return header.getNonce();
-    }
 
     /**
      * Transactions of the block. This might not be a complete list if the block is pruned.
@@ -240,116 +195,6 @@ public class Block {
         return nodes;
     }
 
-    /**
-     * Get hexadecimal serialization of the on-wire block. Useful for tests only.
-     *
-     * @return hex string
-     * @throws IOException
-     */
-    public String toWireDump() throws IOException {
-        WireFormat.ArrayWriter writer = new WireFormat.ArrayWriter();
-        toWire(writer);
-        return ByteUtils.toHex(writer.toByteArray());
-    }
-
-    /**
-     * Reconstruct a block from a hexadecimal string that is on-wire format. Useful for tests only.
-     *
-     * @param s a hex string
-     * @return a block creaked
-     * @throws HyperLedgerException - if the string is not a valid block (only in the sense of wire format)
-     */
-    public static <T extends BitcoinHeader> Block fromWireDump(String s, WireFormatter formatter, Class<T> c) throws HyperLedgerException {
-        try {
-            return Block.fromWire(new WireFormat.Reader(ByteUtils.fromHex(s)), formatter, c);
-        } catch (IOException e) {
-            throw new HyperLedgerException(e);
-        }
-    }
-
-    public byte[] toWireBytes() throws IOException {
-        WireFormat.ArrayWriter writer = new WireFormat.ArrayWriter();
-        toWire(writer);
-        return writer.toByteArray();
-    }
-
-    /**
-     * Serialize a header in P2P wire format
-     *
-     * @param writer a serializer
-     * @throws IOException
-     */
-    @SuppressWarnings("unchecked")
-    public void toWire(WireFormat.Writer writer) throws IOException {
-        WireFormatter formatter = HyperLedgerSettings.getInstance().getTxWireFormatter();
-        if (isPruned())
-            throw new IOException("No wire format defined for pruned blocks");
-        header.toWireHeader(writer);
-        writer.writeVarInt(nodes.size());
-        for (MerkleTreeNode t : nodes) {
-            formatter.toWire((Transaction) t, writer);
-        }
-    }
-
-    public static <T extends BitcoinHeader> Block fromWire(byte[] bytes, WireFormatter formatter, Class<T> c) throws IOException, HyperLedgerException {
-        return fromWire(new WireFormat.Reader(bytes), formatter, c);
-    }
-
-    /**
-     * Reconstruct a header from P2P wire format
-     *
-     * @param reader a deserializer
-     * @throws IOException
-     */
-    public static <T extends BitcoinHeader> Block fromWire(WireFormat.Reader reader, WireFormatter formatter, Class<T> type) throws HyperLedgerException, IOException {
-        Header header;
-        // subclass must be checked first
-        if (HeaderWithSignatures.class.isAssignableFrom(type)) {
-            header = HeaderWithSignatures.fromWire(reader);
-        } else if (BitcoinHeader.class.isAssignableFrom(type)) {
-            header = BitcoinHeader.fromWire(reader);
-        } else {
-            throw new IllegalArgumentException("Unsupported header type: " + type);
-        }
-        long nt = reader.readVarInt();
-        List<Transaction> transactions = new ArrayList<>();
-        for (int i = 0; i < nt; ++i) {
-            transactions.add(formatter.fromWire(reader));
-        }
-        MerkleRoot calculatedMerkleRoot = MerkleTree.computeMerkleRoot(transactions);
-        if (!header.getMerkleRoot().equals(calculatedMerkleRoot)) {
-            String s = String.format("Transaction list not consistent with merkle root in header, prevHash: %s, txCount: %d, merkleRoot: %s, calculatedMerkleRoot: %s", header.getPreviousID(), nt, header.getMerkleRoot(), calculatedMerkleRoot);
-            throw new HyperLedgerException(s);
-        }
-        return new Block(header, transactions);
-    }
-
-    /**
-     * Convert to server message.
-     *
-     * @return a serialization between client and server.
-     */
-    public BCSAPIMessage.BLK toBCSAPIMessage() {
-        BCSAPIMessage.BLK.Builder builder = BCSAPIMessage.BLK.newBuilder();
-        builder.setVersion(getVersion());
-        builder.setDifficulty(getDifficultyTarget());
-        builder.setNonce(getNonce());
-        builder.setTimestamp(getCreateTime());
-        builder.setMerkleRoot(ByteString.copyFrom(getMerkleRoot().unsafeGetArray()));
-        builder.setPreviousBlock(ByteString.copyFrom(getPreviousID().unsafeGetArray()));
-        for (MerkleTreeNode n : getMerkleTreeNodes()) {
-            if (n instanceof Transaction) {
-                builder.addTransactions(BCSAPIMessage.MerkleNode.newBuilder().setTransaction(
-                        ((Transaction) n).toBCSAPIMessage()
-                ));
-            } else {
-                builder.addTransactions(BCSAPIMessage.MerkleNode.newBuilder().setHash(
-                        ByteString.copyFrom(n.getID().unsafeGetArray())
-                ).setHasHash(true));
-            }
-        }
-        return builder.build();
-    }
 
     @Override
     public boolean equals(Object o) {

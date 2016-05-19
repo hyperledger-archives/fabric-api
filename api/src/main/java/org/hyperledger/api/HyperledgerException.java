@@ -13,17 +13,26 @@
  */
 package org.hyperledger.api;
 
-import java.util.List;
-
 /**
- * Listener of new blocks on the trunk of the chain
+ * An exception from the HyperLedger block Chain Server or a problem communicating with it.
  */
-public interface TrunkListener {
-    /**
-     * called if blocks are added This is only called with blocks that establish a new longest chain.
-     * The new longest chain might imply a reorganisation whereby blocks previously on trunk are removed.
-     *
-     * @param added blocks
-     */
-    void trunkUpdate(List<HyperledgerBlock> added);
+public class HyperledgerException extends Exception {
+    private static final long serialVersionUID = -816029891683622613L;
+
+    public HyperledgerException() {
+        super();
+    }
+
+    public HyperledgerException(String arg0, Throwable arg1) {
+        super(arg0, arg1);
+    }
+
+    public HyperledgerException(String arg0) {
+        super(arg0);
+    }
+
+    public HyperledgerException(Throwable arg0) {
+        super(arg0);
+    }
+
 }

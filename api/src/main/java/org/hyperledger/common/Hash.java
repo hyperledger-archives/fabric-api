@@ -13,8 +13,6 @@
  */
 package org.hyperledger.common;
 
-import org.bouncycastle.crypto.digests.RIPEMD160Digest;
-
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -133,27 +131,6 @@ public class Hash {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    /**
-     * Return a RIPEM160(SHA256(data))) hash of key used while deriving Address from a public key
-     *
-     * @param data arbitrary data, usually the internal representation of a public key
-     * @return RIPEM160(SHA256(data)))
-     * @see Address
-     * @see PublicKey
-     */
-    public static byte[] keyHash(byte[] data) {
-        byte[] ph = new byte[20];
-        try {
-            byte[] sha256 = MessageDigest.getInstance("SHA-256").digest(data);
-            RIPEMD160Digest digest = new RIPEMD160Digest();
-            digest.update(sha256, 0, sha256.length);
-            digest.doFinal(ph, 0);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-        return ph;
     }
 
     /**

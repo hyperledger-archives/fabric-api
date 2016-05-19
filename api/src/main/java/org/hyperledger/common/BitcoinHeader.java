@@ -21,20 +21,14 @@ import java.util.Objects;
 
 public class BitcoinHeader implements Header {
     private BID ID;
-    private final int version;
     private final BID previousID;
     private final MerkleRoot merkleRoot;
     private final int createTime;
-    private final int encodedDifficulty;
-    private final int nonce;
 
-    public BitcoinHeader(int version, BID previousID, MerkleRoot merkleRoot, int createTime, int encodedDifficulty, int nonce) {
-        this.version = version;
+    public BitcoinHeader(BID previousID, MerkleRoot merkleRoot, int createTime) {
         this.previousID = previousID;
         this.merkleRoot = merkleRoot;
         this.createTime = createTime;
-        this.encodedDifficulty = encodedDifficulty;
-        this.nonce = nonce;
     }
 
     public static BitcoinHeader.Builder create() {
@@ -47,7 +41,7 @@ public class BitcoinHeader implements Header {
         }
 
         public BitcoinHeader build() {
-            return new BitcoinHeader(version, previousID, merkleRoot, createTime, difficultyTarget, nonce);
+            return new BitcoinHeader(previousID, merkleRoot, createTime);
         }
     }
 
@@ -59,28 +53,7 @@ public class BitcoinHeader implements Header {
      */
     @Override
     public BID getID() {
-        if (ID == null) {
-            Hash h = null;
-            WireFormat.HashWriter writer;
-            try {
-                writer = new WireFormat.HashWriter();
-                toWireHeader(writer);
-                h = writer.hash();
-            } catch (IOException e) {
-            }
-            ID = new BID(h);
-        }
         return ID;
-    }
-
-    /**
-     * The header version
-     *
-     * @return - version
-     */
-    @Override
-    public int getVersion() {
-        return version;
     }
 
     /**
@@ -127,82 +100,6 @@ public class BitcoinHeader implements Header {
         return LocalTime.from(Instant.ofEpochSecond(Integer.toUnsignedLong(createTime)).atZone(ZoneId.of("Z")));
     }
 
-    /**
-     * The difficulty of proof-of-work (POW). This is a big integer encoded in a 32 bits.
-     * The blocks's ID if also interpreted as a big integer must be lower than this.
-     * <p>
-     * For the curious, POW is valid if:
-     * <code>
-     * getID().toBigInteger().compareTo(BigInteger.valueOf(getEncodedDifficulty() & 0x7fffffL).shiftLeft((int) (8 * ((getEncodedDifficulty() >>> 24) - 3)))) <= 0
-     * </code>
-     *
-     * @return the encoded POW difficulty
-     */
-    @Override
-    public int getEncodedDifficulty() {
-        return encodedDifficulty;
-    }
-
-    /**
-     * Nonce for the miner that performs the POW. Unfortunately Satoshi used a 32 bit integer for the purpose,
-     * that is insufficient at least since 2012. Miner that work faster than a few GH/s must also roll some
-     * other content of the header, preferably including new transactions that change the merkle root.
-     * The insufficient size of this is the reason for the inaccuracy of the time stamp as many miner misuse
-     * the time stamp for an extension of this nonce.
-     *
-     * @return nonce - no meaning besides quantifying Satoshi's fortune, see @Link https://bitslog.wordpress.com/2013/04/17/the-well-deserved-fortune-of-satoshi-nakamoto/
-     */
-    @Override
-    public int getNonce() {
-        return nonce;
-    }
-
-    public byte[] toWireHeaderBytes() throws IOException {
-        WireFormat.ArrayWriter writer = new WireFormat.ArrayWriter();
-        toWireHeader(writer);
-        return writer.toByteArray();
-    }
-
-
-    /**
-     * Serialize a header in P2P wire format
-     *
-     * @param writer a serializer
-     * @throws IOException
-     */
-    @Override
-    public void toWireHeader(WireFormat.Writer writer) throws IOException {
-        writer.writeUint32(version);
-        writer.writeHash(previousID);
-        writer.writeHash(merkleRoot);
-        writer.writeUint32(createTime);
-        writer.writeUint32(encodedDifficulty);
-        writer.writeUint32(nonce);
-    }
-
-    public static BitcoinHeader fromWire(byte[] bytes) throws IOException {
-        return fromWire(new WireFormat.Reader(bytes));
-    }
-
-    /**
-     * Reconstruct a header from P2P wire format
-     *
-     * @param reader a deserializer
-     * @throws IOException
-     */
-    public static BitcoinHeader fromWire(WireFormat.Reader reader) throws IOException {
-        return fromWire(new BitcoinHeader.Builder(), reader).build();
-    }
-
-    protected static Builder fromWire(BitcoinHeader.Builder builder, WireFormat.Reader reader) throws IOException {
-        return builder
-                .version(reader.readUint32())
-                .previousID(new BID(reader.readHash()))
-                .merkleRoot(new MerkleRoot(reader.readHash()))
-                .createTime(reader.readUint32())
-                .difficultyTarget(reader.readUint32())
-                .nonce(reader.readUint32());
-    }
 
 
     @Override
@@ -222,11 +119,4 @@ public class BitcoinHeader implements Header {
     public String toString() {
         return getID().toString();
     }
-
-    public byte[] toByteArray() throws IOException {
-        WireFormat.ArrayWriter writer = new WireFormat.ArrayWriter();
-        toWireHeader(writer);
-        return writer.toByteArray();
-    }
-
 }

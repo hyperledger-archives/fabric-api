@@ -19,8 +19,6 @@ import java.time.LocalTime;
 public interface Header {
     BID getID();
 
-    int getVersion();
-
     BID getPreviousID();
 
     MerkleRoot getMerkleRoot();
@@ -29,12 +27,4 @@ public interface Header {
     int getCreateTime();
 
     LocalTime getLocalCreateTime();
-
-    int getEncodedDifficulty();
-
-    int getNonce();
-
-    void toWireHeader(WireFormat.Writer writer) throws IOException;
-
-    byte[] toWireHeaderBytes() throws IOException;
 }
