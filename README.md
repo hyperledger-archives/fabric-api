@@ -1,10 +1,10 @@
-# Incubation Notice
+## Incubation Notice
 This project is a Hyperledger project in _Incubation_. It was proposed to the community and documented [here](https://goo.gl/RYQZ5N). Information on what _Incubation_ entails can be found in the [Hyperledger Project Lifecycle document](https://goo.gl/4edNRc).
 
-# Fabric-API
+## Fabric-API
 Fabric-API comes with a client [API](docs/api.md).
 
-What we are making available today is the most recent stable version of a combination of many man years of work across multiple startups: Digital Asset, Bits of Proof, Blockstack, and Hyperledger. However, it is still a work in progress and we are in the process of replacing several components, adding others, and integrating with other open source projects. This particularly relates to security, scalability, and privacy.
+While this peoject represents the fruit of many man-years of development, it is still a work in progress and we are in the process of replacing several components, adding others, and integrating with other open source projects. This particularly relates to security, scalability, and privacy.
 
 Fabric-API was built with the requirements of enterprise architecture in mind by a team that has worked in financial institutions for decades. It has a highly modular design at both the code and runtime levels to allow for integrations with legacy systems.
 
@@ -37,7 +37,7 @@ Version numbers below indicate the versions used.
  * ```add-apt-repository ppa:webupd8team/java```
  * ```apt-get update```
  * ```apt-get install git maven oracle-java8-installer oracle-java8-unlimited-jce-policy protobuf-compiler procmail```
- 
+
 #### Building and installing secp256k1 library
  * ```git clone https://github.com/bitcoin-core/secp256k1.git```
  * ```cd secp256k1```
@@ -50,7 +50,7 @@ Version numbers below indicate the versions used.
  * ```git clone https://github.com/hyperledger/fabric-api.git```
  * ```cd fabric-api```
  * ```mvn clean package -Djava.library.path=```&lt;path_to_the_installed_secp256k1_library&gt;
-  
+
 ## Documentation
  * [API](docs/api.md) (low level API)
  * [Account](docs/accountmodule.md) (high level API)
