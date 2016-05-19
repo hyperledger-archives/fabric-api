@@ -32,6 +32,11 @@ Version numbers below indicate the versions used.
  * Download _Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files for JDK/JRE 8_ from Oracle, which is a zip file. Extract it and copy the `local_policy.jar` and `US_export_policy.jar` files to your your `<java_runtime_home>/lib/security`
  * ```brew install protobuf250```
  * ```brew install procmail``` if the command ```lockfile``` is not available on your OSX version
+ * Prerequisites for building secp256k1
+  * ```brew install automake```
+  * ```brew install libtool```
+  * You must have JNI installed. Install Xcode. Next, install the Xcode command line tools using the `xcode-select --install` command. You should now have `/System/Library/Frameworks/JavaVM.framework/Headers/jni.h`
+  * Ensure the `$JAVA_HOME` environmental variable is unset.
 
 #### Installing Prerequisites on Ubuntu Linux
  * ```add-apt-repository ppa:webupd8team/java```
@@ -41,7 +46,7 @@ Version numbers below indicate the versions used.
 #### Building and installing secp256k1 library
  * ```git clone https://github.com/bitcoin-core/secp256k1.git```
  * ```cd secp256k1```
- * ```./autgen.sh```
+ * ```./autogen.sh```
  * ```./configure --enable-module-schnorr --enable-experimental --enable-module-ecdh --enable-jni```
  * ```make install```
 
