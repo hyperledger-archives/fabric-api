@@ -25,7 +25,7 @@ public class HLAPITransaction extends Transaction {
     private final BID blockID;
 
     public HLAPITransaction(Transaction transaction, BID blockID) {
-        super(transaction.getID());
+        super(transaction.getID(), transaction.getPayload());
         this.blockID = blockID;
     }
 

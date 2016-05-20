@@ -19,9 +19,11 @@ package org.hyperledger.common;
  */
 public class Transaction implements MerkleTreeNode {
     private TID ID;
+    private byte [] payload;
 
-    public Transaction(TID ID) {
+    public Transaction(TID ID, byte [] payload) {
         this.ID = ID;
+        this.payload = payload;
     }
 
     /**
@@ -40,5 +42,9 @@ public class Transaction implements MerkleTreeNode {
      */
     public TID getID() {
         return ID;
+    }
+
+    public byte[] getPayload() {
+        return payload;
     }
 }
