@@ -49,7 +49,7 @@ import javax.xml.bind.DatatypeConverter;
 public class GRPCClient implements HLAPI {
     private static final Logger log = LoggerFactory.getLogger(GRPCClient.class);
 
-    final String chaincodeName = "utxo";
+    final String chaincodeName = "noop";
 
 
     private DevopsBlockingStub dbs;
@@ -89,7 +89,7 @@ public class GRPCClient implements HLAPI {
 
     private ByteString query(String functionName, Iterable<String> args) {
         Chaincode.ChaincodeID chainCodeId = Chaincode.ChaincodeID.newBuilder()
-                .setName("utxo")
+                .setName(chaincodeName)
                 .build();
 
         Chaincode.ChaincodeInput chainCodeInput = Chaincode.ChaincodeInput.newBuilder()
