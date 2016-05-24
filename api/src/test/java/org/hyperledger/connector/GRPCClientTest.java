@@ -13,12 +13,8 @@
  */
 package org.hyperledger.connector;
 
-import org.hyperledger.account.BaseAccount;
-import org.hyperledger.account.BaseTransactionFactory;
-import org.hyperledger.account.KeyListChain;
-import org.hyperledger.account.TransactionFactory;
-import org.hyperledger.api.APITransaction;
-import org.hyperledger.api.BCSAPIException;
+import org.hyperledger.api.HLAPIException;
+import org.hyperledger.api.HLAPITransaction;
 import org.hyperledger.common.*;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -42,7 +38,7 @@ public class GRPCClientTest {
 
 
     @Test
-    public void testGetBlockHeight() throws BCSAPIException {
+    public void testGetBlockHeight() throws HLAPIException {
         int height = client.getChainHeight();
 
         log.debug("testGetBlockHeight height=" + height);
@@ -51,26 +47,21 @@ public class GRPCClientTest {
     }
 
     @Test
-    public void getNonExistingTransaction() throws BCSAPIException {
-        APITransaction res = client.getTransaction(TID.INVALID);
+    public void getNonExistingTransaction() throws HLAPIException {
+        HLAPITransaction res = client.getTransaction(TID.INVALID);
         assertTrue(res == null);
     }
 
     @Test
-    public void sendTransaction() throws HyperLedgerException, BCSAPIException, InterruptedException {
-        PrivateKey priv = PrivateKey.createNew();
-
-        Transaction tx = Transaction.create()
-                .inputs(TransactionInput.create().source(TID.INVALID, -1).build())
-                .outputs(TransactionOutput.create().payTo(priv.getAddress()).build())
-                .build();
+    public void sendTransaction() throws HLAPIException, InterruptedException {
+        Transaction tx = new Transaction(TID.INVALID, new byte[100]);
 
         int originalHeight = client.getChainHeight();
         client.sendTransaction(tx);
 
         Thread.sleep(1500);
 
-        APITransaction res = client.getTransaction(tx.getID());
+        HLAPITransaction res = client.getTransaction(tx.getID());
         assertEquals(tx, res);
         int newHeight = client.getChainHeight();
         assertTrue(newHeight == originalHeight + 1);

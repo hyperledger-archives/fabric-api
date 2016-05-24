@@ -18,7 +18,6 @@ Version numbers below indicate the versions used.
  * Java 1.8.0_51 (http://java.oracle.com)
  * JCE 8 (Java Crptography Extension) (http://java.oracle.com)
  * Protobuf compiler 3.0.0-beta2 (http://github.com/google/protobuf)
- * Secp256k1 library (http://github.com/bitcoin-core/secp256k1)
 
 #### Optionally a JMS bus provider
  * e.g. Apache ActiveMQ 5.11.1 (http://activemq.apache.org/)
@@ -43,22 +42,11 @@ Version numbers below indicate the versions used.
  * ```apt-get update```
  * ```apt-get install git maven oracle-java8-installer oracle-java8-unlimited-jce-policy protobuf-compiler procmail```
 
-#### Building and installing secp256k1 library
- * ```git clone https://github.com/bitcoin-core/secp256k1.git```
- * ```cd secp256k1```
- * ```./autogen.sh```
- * ```./configure --enable-module-schnorr --enable-experimental --enable-module-ecdh --enable-jni```
- * ```make install```
-
 ### Building Steps
 
  * ```git clone https://github.com/hyperledger/fabric-api.git```
  * ```cd fabric-api```
  * ```mvn clean package -Djava.library.path=```&lt;path_to_the_installed_secp256k1_library&gt;
-
-## Documentation
- * [API](docs/api.md) (low level API)
- * [Account](docs/accountmodule.md) (high level API)
 
 ## Contributing
 [How to contribute?](docs/contributing.md)

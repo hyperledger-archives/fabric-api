@@ -13,11 +13,11 @@
  */
 package org.hyperledger.common;
 
-import org.bouncycastle.util.encoders.Hex;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.util.Arrays;
 
 /**
  * generic byte array utilities
@@ -82,72 +82,6 @@ public class ByteUtils {
     }
 
     /**
-     * decode from base58 assuming a trailing checksum of four bytes
-     *
-     * @param s
-     * @return
-     * @throws HyperLedgerException
-     */
-    public static byte[] fromBase58WithChecksum(String s) throws HyperLedgerException {
-        byte[] b = fromBase58(s);
-        if (b.length < 4) {
-            throw new HyperLedgerException("Too short for checksum " + s);
-        }
-        byte[] cs = new byte[4];
-        System.arraycopy(b, b.length - 4, cs, 0, 4);
-        byte[] data = new byte[b.length - 4];
-        System.arraycopy(b, 0, data, 0, b.length - 4);
-        byte[] h = new byte[4];
-        System.arraycopy(Hash.hash(data), 0, h, 0, 4);
-        if (Arrays.equals(cs, h)) {
-            return data;
-        }
-        throw new HyperLedgerException("Checksum mismatch " + s);
-    }
-
-    /**
-     * decode from base58
-     *
-     * @param s
-     * @return
-     * @throws HyperLedgerException
-     */
-    public static byte[] fromBase58(String s) throws HyperLedgerException {
-        try {
-            boolean leading = true;
-            int lz = 0;
-            BigInteger b = BigInteger.ZERO;
-            for (char c : s.toCharArray()) {
-                if (leading && c == '1') {
-                    ++lz;
-                } else {
-                    leading = false;
-                    b = b.multiply(BigInteger.valueOf(58));
-                    b = b.add(BigInteger.valueOf(r58[c]));
-                }
-            }
-            byte[] encoded = b.toByteArray();
-            if (encoded[0] == 0) {
-                if (lz > 0) {
-                    --lz;
-                } else {
-                    byte[] e = new byte[encoded.length - 1];
-                    System.arraycopy(encoded, 1, e, 0, e.length);
-                    encoded = e;
-                }
-            }
-            byte[] result = new byte[encoded.length + lz];
-            System.arraycopy(encoded, 0, result, lz, encoded.length);
-
-            return result;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new HyperLedgerException("Invalid character in address");
-        } catch (Exception e) {
-            throw new HyperLedgerException(e);
-        }
-    }
-
-    /**
      * reverse a byte array in place
      * WARNING the parameter array is altered and returned.
      *
@@ -170,11 +104,7 @@ public class ByteUtils {
      * @return
      */
     public static String toHex(byte[] data) {
-        try {
-            return new String(Hex.encode(data), "US-ASCII");
-        } catch (UnsupportedEncodingException e) {
-        }
-        return null;
+        return Hex.encodeHex(data).toString();
     }
 
     /**
@@ -184,6 +114,10 @@ public class ByteUtils {
      * @return
      */
     public static byte[] fromHex(String hex) {
-        return Hex.decode(hex);
+        try {
+            return Hex.decodeHex(hex.toCharArray());
+        } catch (DecoderException e) {
+            return null;
+        }
     }
 }

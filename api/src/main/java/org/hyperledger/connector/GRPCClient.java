@@ -46,10 +46,10 @@ import protos.Api.BlockCount;
 
 import javax.xml.bind.DatatypeConverter;
 
-public class GRPCClient implements BCSAPI {
+public class GRPCClient implements HLAPI {
     private static final Logger log = LoggerFactory.getLogger(GRPCClient.class);
 
-    final String chaincodeName = "utxo";
+    final String chaincodeName = "noop";
 
 
     private DevopsBlockingStub dbs;
@@ -89,7 +89,7 @@ public class GRPCClient implements BCSAPI {
 
     private ByteString query(String functionName, Iterable<String> args) {
         Chaincode.ChaincodeID chainCodeId = Chaincode.ChaincodeID.newBuilder()
-                .setName("utxo")
+                .setName(chaincodeName)
                 .build();
 
         Chaincode.ChaincodeInput chainCodeInput = Chaincode.ChaincodeInput.newBuilder()
@@ -112,22 +112,22 @@ public class GRPCClient implements BCSAPI {
     }
 
     @Override
-    public String getClientVersion() throws BCSAPIException {
+    public String getClientVersion() throws HLAPIException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String getServerVersion() throws BCSAPIException {
+    public String getServerVersion() throws HLAPIException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public long ping(long nonce) throws BCSAPIException {
+    public long ping(long nonce) throws HLAPIException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void addAlertListener(AlertListener listener) throws BCSAPIException {
+    public void addAlertListener(AlertListener listener) throws HLAPIException {
         throw new UnsupportedOperationException();
     }
 
@@ -137,58 +137,38 @@ public class GRPCClient implements BCSAPI {
     }
 
     @Override
-    public int getChainHeight() throws BCSAPIException {
+    public int getChainHeight() throws HLAPIException {
         BlockCount height = obs.getBlockCount(com.google.protobuf.Empty.getDefaultInstance());
         return (int) height.getCount();
     }
 
+
     @Override
-    public APIBlockIdList getBlockIds(BID blockId, int count) throws BCSAPIException {
+    public HLAPIHeader getBlockHeader(BID hash) throws HLAPIException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public APIHeader getBlockHeader(BID hash) throws BCSAPIException {
+    public HLAPIBlock getBlock(BID hash) throws HLAPIException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public APIBlock getBlock(BID hash) throws BCSAPIException {
-        throw new UnsupportedOperationException();
+    public HLAPITransaction getTransaction(TID hash) throws HLAPIException {
+        String hexedHash = ByteUtils.toHex(hash.toByteArray());
+        ByteString result = query("getTran", Collections.singletonList(hexedHash));
+        byte[] resultStr = result.toByteArray();
+        if (resultStr.length == 0) return null;
+        return new HLAPITransaction(new Transaction(hash, resultStr), BID.INVALID);
     }
 
     @Override
-    public APITransaction getTransaction(TID hash) throws BCSAPIException {
-        try {
-            String hexedHash = ByteUtils.toHex(hash.toByteArray());
-            ByteString result = query("getTran", Collections.singletonList(hexedHash));
-            byte[] resultStr = result.toByteArray();
-            if (resultStr.length == 0) return null;
-            return new APITransaction(new WireFormatter().fromWire(resultStr), BID.INVALID);
-        } catch (IOException e) {
-            throw new BCSAPIException (e);
-        }
+    public void sendTransaction(Transaction transaction) throws HLAPIException {
+        invoke(chaincodeName, transaction.getPayload());
     }
 
     @Override
-    public List<APITransaction> getInputTransactions(TID txId) throws BCSAPIException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void sendTransaction(Transaction transaction) throws BCSAPIException {
-        try {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            WireFormat.Writer w = new WireFormat.Writer(os);
-            new WireFormatter().toWire(transaction, w);
-            invoke(chaincodeName, os.toByteArray());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void registerRejectListener(RejectListener rejectListener) throws BCSAPIException {
+    public void registerRejectListener(RejectListener rejectListener) throws HLAPIException {
         throw new UnsupportedOperationException();
     }
 
@@ -197,19 +177,14 @@ public class GRPCClient implements BCSAPI {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public APIHeader mine(Address address) throws BCSAPIException {
-        log.info("mine discarded for {}", address);
-        return null;
-    }
 
     @Override
-    public void sendBlock(Block block) throws BCSAPIException {
+    public void sendBlock(Block block) throws HLAPIException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void registerTransactionListener(TransactionListener listener) throws BCSAPIException {
+    public void registerTransactionListener(TransactionListener listener) throws HLAPIException {
         observer.subscribe(listener);
     }
 
@@ -219,7 +194,7 @@ public class GRPCClient implements BCSAPI {
     }
 
     @Override
-    public void registerTrunkListener(TrunkListener listener) throws BCSAPIException {
+    public void registerTrunkListener(TrunkListener listener) throws HLAPIException {
         throw new UnsupportedOperationException();
     }
 
@@ -229,28 +204,9 @@ public class GRPCClient implements BCSAPI {
     }
 
     @Override
-    public void scanTransactionsForAddresses(Set<Address> addresses, TransactionListener listener)
-            throws BCSAPIException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void scanTransactions(MasterPublicKey master, int lookAhead, TransactionListener listener)
-            throws BCSAPIException {
-        // TODO we will need this
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void catchUp(List<BID> inventory, int limit, boolean headers, TrunkListener listener)
-            throws BCSAPIException {
+            throws HLAPIException {
         // TODO we will need this
         throw new UnsupportedOperationException();
     }
-
-    @Override
-    public void spendingTransactions(List<TID> tids, TransactionListener listener) throws BCSAPIException {
-        throw new UnsupportedOperationException();
-    }
-
 }

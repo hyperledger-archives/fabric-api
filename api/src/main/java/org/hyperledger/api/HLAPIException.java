@@ -13,18 +13,26 @@
  */
 package org.hyperledger.api;
 
-
 /**
- * Listener interface for transactions sent by the server.
- *
- * @returns the return value is not evaluated by the server
+ * An exception from the HyperLedger block Chain Server or a problem communicating with it.
  */
-public interface TransactionListener {
-    /**
-     * Process a transaction
-     *
-     * @param t a transaction wrapped into an HLAPITransaction that also carries the block ID if available
-     * @throws HLAPIException
-     */
-    void process(HLAPITransaction t) throws HLAPIException;
+public class HLAPIException extends Exception {
+    private static final long serialVersionUID = -816029891683622613L;
+
+    public HLAPIException() {
+        super();
+    }
+
+    public HLAPIException(String arg0, Throwable arg1) {
+        super(arg0, arg1);
+    }
+
+    public HLAPIException(String arg0) {
+        super(arg0);
+    }
+
+    public HLAPIException(Throwable arg0) {
+        super(arg0);
+    }
+
 }

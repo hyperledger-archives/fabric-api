@@ -17,11 +17,12 @@ package org.hyperledger.connector;
 import com.google.protobuf.ByteString;
 import io.grpc.Channel;
 import io.grpc.stub.StreamObserver;
-import org.hyperledger.api.APITransaction;
+import org.hyperledger.api.HLAPIException;
+import org.hyperledger.api.HLAPITransaction;
 import org.hyperledger.api.TransactionListener;
 import org.hyperledger.common.BID;
-import org.hyperledger.common.HyperLedgerException;
-import org.hyperledger.common.WireFormatter;
+import org.hyperledger.common.TID;
+import org.hyperledger.common.Transaction;
 import protos.Chaincode;
 import protos.EventsGrpc;
 import protos.EventsOuterClass;
@@ -49,9 +50,9 @@ public class GRPCObserver {
                         Chaincode.ChaincodeInvocationSpec invocationSpec = Chaincode.ChaincodeInvocationSpec.parseFrom(invocationSpecBytes);
                         String transactionString = invocationSpec.getChaincodeSpec().getCtorMsg().getArgs(0);
                         byte[] transactionBytes = DatatypeConverter.parseBase64Binary(transactionString);
-                        APITransaction tx = new APITransaction(new WireFormatter().fromWire(transactionBytes), BID.INVALID);
+                        HLAPITransaction tx = new HLAPITransaction(new Transaction(TID.INVALID, transactionBytes), BID.INVALID);
                         listener.process(tx);
-                    } catch (HyperLedgerException | IOException e) {
+                    } catch (HLAPIException | IOException e) {
                         e.printStackTrace();
                     }
                 });
