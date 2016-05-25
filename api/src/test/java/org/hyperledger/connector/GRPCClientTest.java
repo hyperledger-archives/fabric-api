@@ -22,9 +22,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class GRPCClientTest {
     private static final Logger log = LoggerFactory.getLogger(GRPCClientTest.class);
@@ -54,7 +52,7 @@ public class GRPCClientTest {
 
     @Test
     public void sendTransaction() throws HLAPIException, InterruptedException {
-        Transaction tx = new Transaction(TID.INVALID, new byte[100]);
+        Transaction tx = new Transaction(new byte[100]);
 
         int originalHeight = client.getChainHeight();
         client.sendTransaction(tx);
@@ -62,7 +60,8 @@ public class GRPCClientTest {
         Thread.sleep(1500);
 
         HLAPITransaction res = client.getTransaction(tx.getID());
-        assertEquals(tx, res);
+        assertEquals(tx.getID(), res.getID());
+        assertArrayEquals(tx.getPayload(), res.getPayload());
         int newHeight = client.getChainHeight();
         assertTrue(newHeight == originalHeight + 1);
     }

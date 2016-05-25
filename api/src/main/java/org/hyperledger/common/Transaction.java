@@ -21,8 +21,8 @@ public class Transaction implements MerkleTreeNode {
     private TID ID;
     private byte [] payload;
 
-    public Transaction(TID ID, byte [] payload) {
-        this.ID = ID;
+    public Transaction(byte [] payload) {
+        this.ID = new TID(Hash.of(payload));
         this.payload = payload;
     }
 
