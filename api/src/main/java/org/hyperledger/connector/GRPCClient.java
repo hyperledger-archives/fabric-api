@@ -159,7 +159,9 @@ public class GRPCClient implements HLAPI {
         ByteString result = query("getTran", Collections.singletonList(hexedHash));
         byte[] resultStr = result.toByteArray();
         if (resultStr.length == 0) return null;
-        return new HLAPITransaction(new Transaction(hash, resultStr), BID.INVALID);
+        Transaction t = new Transaction(resultStr);
+        if (!hash.equals(t.getID())) return null;
+        return new HLAPITransaction(new Transaction(resultStr), BID.INVALID);
     }
 
     @Override

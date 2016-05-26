@@ -104,7 +104,7 @@ public class ByteUtils {
      * @return
      */
     public static String toHex(byte[] data) {
-        return Hex.encodeHex(data).toString();
+        return new String(Hex.encodeHex(data));
     }
 
     /**
