@@ -17,6 +17,7 @@ package org.hyperledger.api.connector;
 
 import org.hyperledger.api.HLAPIException;
 import org.hyperledger.api.HLAPITransaction;
+import org.hyperledger.api.TransactionListener;
 import org.hyperledger.transaction.TID;
 import org.hyperledger.transaction.Transaction;
 import org.hyperledger.transaction.TransactionBuilder;
@@ -36,7 +37,6 @@ public class GRPCClientTest {
     public void setUp() {
         client = new GRPCClient("localhost", 30303, 31315);
     }
-
 
     @Test
     public void testGetBlockHeight() throws HLAPIException {
@@ -69,5 +69,39 @@ public class GRPCClientTest {
         assertTrue(newHeight == originalHeight + 1);
     }
 
+    @Test
+    public void transactionListener() throws HLAPIException, InterruptedException {
+        Transaction tx1 = new TransactionBuilder().payload(new byte[100]).build();
+        Transaction tx2 = new TransactionBuilder().payload(new byte[90]).build();
+        class TestListener implements TransactionListener {
+            private byte processedTxCount = 0;
+
+            public byte getProcessedTxCount() {
+                return processedTxCount;
+            }
+
+            @Override
+            public void process(HLAPITransaction t) throws HLAPIException {
+                processedTxCount++;
+                System.out.println(t.getID().toString());
+            }
+
+        };
+        TestListener listener = new TestListener();
+        client.registerTransactionListener(listener);
+
+        client.sendTransaction(tx1);
+        client.sendTransaction(tx2);
+
+        byte expectedTxCount = 2;
+        byte counter = 3;
+        while(counter != 0 && expectedTxCount != listener.getProcessedTxCount())
+        {
+          Thread.sleep(1000);
+          counter--;
+        }
+        client.removeTransactionListener(listener);
+        assertEquals(expectedTxCount, listener.getProcessedTxCount());
+    }
 
 }
