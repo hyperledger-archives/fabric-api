@@ -15,21 +15,24 @@
 package org.hyperledger.connector;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+
 import io.grpc.Channel;
 import io.grpc.stub.StreamObserver;
 import org.hyperledger.api.HLAPIException;
 import org.hyperledger.api.HLAPITransaction;
 import org.hyperledger.api.TransactionListener;
 import org.hyperledger.common.BID;
-import org.hyperledger.common.TID;
 import org.hyperledger.common.Transaction;
 import protos.Chaincode;
 import protos.EventsGrpc;
 import protos.EventsOuterClass;
+import protos.Fabric.Block;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class GRPCObserver {
@@ -46,17 +49,26 @@ public class GRPCObserver {
             public void onNext(EventsOuterClass.Event openchainEvent) {
                 listeners.forEach((listener) -> {
                     try {
-                        ByteString invocationSpecBytes = openchainEvent.getBlock().getTransactions(0).getPayload();
-                        Chaincode.ChaincodeInvocationSpec invocationSpec = Chaincode.ChaincodeInvocationSpec.parseFrom(invocationSpecBytes);
-                        String transactionString = invocationSpec.getChaincodeSpec().getCtorMsg().getArgs(0);
-                        byte[] transactionBytes = DatatypeConverter.parseBase64Binary(transactionString);
-                        HLAPITransaction tx = new HLAPITransaction(new Transaction(transactionBytes), BID.INVALID);
-                        listener.process(tx);
+                        if (openchainEvent.getEventCase() == EventsOuterClass.Event.EventCase.BLOCK) {
+                            Block block = openchainEvent.getBlock();
+                            processAll(listener, block.getTransactionsList());
+                        }
                     } catch (HLAPIException | IOException e) {
                         e.printStackTrace();
                     }
                 });
                 System.out.println("new event: " + openchainEvent.toString());
+            }
+
+            private void processAll(TransactionListener listener, List<protos.Fabric.Transaction> transactionsList) throws HLAPIException, InvalidProtocolBufferException {
+                for(protos.Fabric.Transaction tx : transactionsList) {
+                    ByteString invocationSpecBytes = tx.getPayload();
+                    Chaincode.ChaincodeInvocationSpec invocationSpec = Chaincode.ChaincodeInvocationSpec.parseFrom(invocationSpecBytes);
+                    String transactionString = invocationSpec.getChaincodeSpec().getCtorMsg().getArgs(0);
+                    byte[] transactionBytes = DatatypeConverter.parseBase64Binary(transactionString);
+                    HLAPITransaction hlapitx = new HLAPITransaction(new Transaction(transactionBytes), BID.INVALID);
+                    listener.process(hlapitx);
+                }
             }
 
             @Override
