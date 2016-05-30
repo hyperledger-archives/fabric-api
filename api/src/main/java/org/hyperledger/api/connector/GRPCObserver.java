@@ -17,29 +17,30 @@
 package org.hyperledger.api.connector;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import io.grpc.Channel;
 import io.grpc.stub.StreamObserver;
-import org.hyperledger.api.HLAPIException;
-import org.hyperledger.api.HLAPITransaction;
-import org.hyperledger.api.TransactionListener;
+import org.hyperledger.api.*;
 import org.hyperledger.block.BID;
 import org.hyperledger.transaction.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import protos.Chaincode;
 import protos.EventsGrpc;
 import protos.EventsOuterClass;
-import protos.Fabric.Block;
+import protos.Fabric.TransactionResult;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class GRPCObserver {
+    private static final Logger log = LoggerFactory.getLogger(GRPCObserver.class);
+
     private EventsGrpc.EventsStub es;
-    private Set<TransactionListener> listeners = new HashSet<>();
+    private Set<TransactionListener> txListeners = new HashSet<>();
+    private Set<TrunkListener> trunkListeners = new HashSet<>();
+    private Set<RejectListener> rejectionListeners = new HashSet<>();
 
     public GRPCObserver(Channel eventsChannel) {
         es = EventsGrpc.newStub(eventsChannel);
@@ -49,28 +50,71 @@ public class GRPCObserver {
         StreamObserver<EventsOuterClass.Event> receiver = new StreamObserver<EventsOuterClass.Event>() {
             @Override
             public void onNext(EventsOuterClass.Event openchainEvent) {
-                listeners.forEach((listener) -> {
-                    try {
-                        if (openchainEvent.getEventCase() == EventsOuterClass.Event.EventCase.BLOCK) {
-                            Block block = openchainEvent.getBlock();
-                            processAll(listener, block.getTransactionsList());
-                        }
-                    } catch (HLAPIException | IOException e) {
-                        e.printStackTrace();
-                    }
-                });
+                if (openchainEvent.getEventCase() == EventsOuterClass.Event.EventCase.BLOCK) {
+                    List<HLAPITransaction> transactionsList = convertToHLAPITxList(openchainEvent.getBlock().getTransactionsList());
+                    HLAPIBlock block = new HLAPIBlock.Builder().transactions(transactionsList).build();
+                    Map<String, TransactionResult> results = openchainEvent.getBlock().getNonHashData()
+                            .getTransactionResultsList().stream()
+                            .collect(Collectors.toMap(TransactionResult::getUuid, item -> item));
+
+                    serveTransactionListeners(transactionsList, results);
+                    serveRejectionListeners(transactionsList, results);
+                    serveTrunkListeners(block);
+                }
                 System.out.println("new event: " + openchainEvent.toString());
             }
 
-            private void processAll(TransactionListener listener, List<protos.Fabric.Transaction> transactionsList) throws HLAPIException, IOException {
-                for(protos.Fabric.Transaction tx : transactionsList) {
-                    ByteString invocationSpecBytes = tx.getPayload();
-                    Chaincode.ChaincodeInvocationSpec invocationSpec = Chaincode.ChaincodeInvocationSpec.parseFrom(invocationSpecBytes);
-                    String transactionString = invocationSpec.getChaincodeSpec().getCtorMsg().getArgs(0);
-                    byte[] transactionBytes = DatatypeConverter.parseBase64Binary(transactionString);
-                    HLAPITransaction hlapitx = new HLAPITransaction(Transaction.fromByteArray(transactionBytes), BID.INVALID);
-                    listener.process(hlapitx);
+            private void serveTransactionListeners(List<HLAPITransaction> transactionsList, Map<String, TransactionResult> results) {
+                for (HLAPITransaction tx : transactionsList) {
+                    txListeners.forEach((txListener) -> {
+                        try {
+                            TransactionResult result = results.get(tx.getID().toUuidString());
+                            if (result.getErrorCode() == 0) {
+                                txListener.process(tx);
+                            }
+                        } catch (HLAPIException e) {
+                            e.printStackTrace();
+                        }
+                    });
                 }
+            }
+
+            private void serveRejectionListeners(List<HLAPITransaction> transactionsList, Map<String, TransactionResult> results) {
+                for (HLAPITransaction tx : transactionsList) {
+                    rejectionListeners.forEach((rjListener) -> {
+                        TransactionResult result = results.get(tx.getID().toUuidString());
+                        if (result.getErrorCode() != 0) {
+                            rjListener.rejected("invoke", tx.getID(), result.getError(), result.getErrorCode());
+                        }
+                    });
+                }
+            }
+
+            private void serveTrunkListeners(HLAPIBlock block) {
+                List<HLAPIBlock> blocks = new ArrayList<>(1);
+                blocks.add(block);
+                trunkListeners.forEach((blockListener) -> {
+                    blockListener.trunkUpdate(blocks);
+                });
+            }
+
+            private List<HLAPITransaction> convertToHLAPITxList(List<protos.Fabric.Transaction> transactionsList) {
+                List<HLAPITransaction> result = new ArrayList<>(transactionsList.size());
+                for (protos.Fabric.Transaction tx : transactionsList) {
+                    ByteString invocationSpecBytes = tx.getPayload();
+                    Chaincode.ChaincodeInvocationSpec invocationSpec;
+                    try {
+                        invocationSpec = Chaincode.ChaincodeInvocationSpec.parseFrom(invocationSpecBytes);
+                        String transactionString = invocationSpec.getChaincodeSpec().getCtorMsg().getArgs(0);
+                        byte[] transactionBytes = DatatypeConverter.parseBase64Binary(transactionString);
+                        HLAPITransaction hlapitx = new HLAPITransaction(Transaction.fromByteArray(transactionBytes), BID.INVALID);
+                        result.add(hlapitx);
+                    } catch (IOException e) {
+                        log.error("Error when processing transaction: {}", e.getMessage());
+                    }
+
+                }
+                return result;
             }
 
             @Override
@@ -102,11 +146,27 @@ public class GRPCObserver {
         sender.onNext(registerEvent);
     }
 
-    public void subscribe(TransactionListener l) {
-        listeners.add(l);
+    public void subscribeToTransactions(TransactionListener l) {
+        txListeners.add(l);
     }
 
-    public void unsubscribe(TransactionListener l) {
-        listeners.remove(l);
+    public void unsubscribeFromTransactions(TransactionListener l) {
+        txListeners.remove(l);
+    }
+
+    public void subscribeToBlocks(TrunkListener l) {
+        trunkListeners.add(l);
+    }
+
+    public void unsubscribeFromBlocks(TrunkListener l) {
+        trunkListeners.remove(l);
+    }
+
+    public void subscribeToRejections(RejectListener l) {
+        rejectionListeners.add(l);
+    }
+
+    public void unsubscribeFromRejections(RejectListener l) {
+        rejectionListeners.remove(l);
     }
 }
