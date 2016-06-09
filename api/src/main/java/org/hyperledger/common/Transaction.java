@@ -13,6 +13,8 @@
  */
 package org.hyperledger.common;
 
+import java.util.Arrays;
+
 /**
  * A transaction in the ledger.
  * A transaction reallocates inputs to outputs. Inputs are outputs of previous transactions.
@@ -34,7 +36,6 @@ public class Transaction implements MerkleTreeNode {
         return 0;
     }
 
-
     /**
      * get the Transaction ID
      *
@@ -46,5 +47,29 @@ public class Transaction implements MerkleTreeNode {
 
     public byte[] getPayload() {
         return payload;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.ID.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (!(obj instanceof Transaction))
+            return false;
+        Transaction other = (Transaction) obj;
+        if (ID == null) {
+            if (other.ID != null)
+                return false;
+        } else if (!ID.equals(other.ID))
+            return false;
+        if (!Arrays.equals(payload, other.payload))
+            return false;
+        return true;
     }
 }
