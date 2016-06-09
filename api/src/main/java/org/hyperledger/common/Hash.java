@@ -159,6 +159,17 @@ public class Hash {
     }
 
     /**
+     * Create a Hash from a UUID created from the first 128 bits of SHA256
+     *
+     * @return Hash
+     */
+    public static Hash fromUuidString(String uuidStr) {
+        String uuidWoDash = uuidStr.replaceAll("[-]", "");
+        byte[] uuidBytes = ByteUtils.fromHex(uuidWoDash);
+        return new Hash(Arrays.copyOf(uuidBytes, 32));
+    }
+
+    /**
      * UUID created from the first 128 bits of SHA256
      *
      * @return String
@@ -208,6 +219,18 @@ public class Hash {
 
         if (!Arrays.equals(bytes, hash.bytes)) return false;
 
+        return true;
+    }
+
+    public boolean equalsAsUuidString(Object o) {
+        if (this == o)
+            return true;
+        if (o == null)
+            return false;
+        if (!(o instanceof Hash))
+            return false;
+        Hash other = (Hash) o;
+        if (!toUuidString().equals(other.toUuidString())) return false;
         return true;
     }
 

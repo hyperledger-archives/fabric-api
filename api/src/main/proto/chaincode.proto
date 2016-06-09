@@ -93,7 +93,6 @@ message ChaincodeDeploymentSpec {
 message ChaincodeInvocationSpec {
 
     ChaincodeSpec chaincodeSpec = 1;
-    //ChaincodeInput message = 2;
     // This field can contain a user-specified UUID generation algorithm
     // If supplied, this will be used to generate a UUID
     // If not supplied (left empty), a random UUID will be generated

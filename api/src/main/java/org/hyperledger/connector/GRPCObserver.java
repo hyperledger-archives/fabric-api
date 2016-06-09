@@ -27,10 +27,12 @@ import org.hyperledger.api.RejectListener;
 import org.hyperledger.api.TransactionListener;
 import org.hyperledger.api.TrunkListener;
 import org.hyperledger.common.BID;
+import org.hyperledger.common.TID;
 import org.hyperledger.common.Transaction;
 import protos.Chaincode;
 import protos.EventsGrpc;
 import protos.EventsOuterClass;
+import protos.EventsOuterClass.Rejection;
 import protos.Fabric.Block;
 import protos.Fabric.TransactionResult;
 
@@ -61,38 +63,31 @@ public class GRPCObserver {
                 if (openchainEvent.getEventCase() == EventsOuterClass.Event.EventCase.BLOCK) {
                     List<HLAPITransaction> transactionsList = convertToHLAPITxList(openchainEvent.getBlock().getTransactionsList());
                     HLAPIBlock block = new HLAPIBlock.Builder().transactions(transactionsList).build();
-                    Map<String, TransactionResult> results = openchainEvent.getBlock().getNonHashData()
-                                                                        .getTransactionResultsList().stream()
-                                                                        .collect(Collectors.toMap(TransactionResult::getUuid, item -> item));
-
-                    serveTransactionListeners(transactionsList, results);
-                    serveRejectionListeners(transactionsList, results);
+                    serveTransactionListeners(transactionsList);
                     serveTrunkListeners(block);
+                }
+                if (openchainEvent.getEventCase() == EventsOuterClass.Event.EventCase.REJECTION) {
+                    serveRejectionListeners(openchainEvent.getRejection());
                 }
                 System.out.println("new event: " + openchainEvent.toString());
             }
 
-            private void serveTransactionListeners(List<HLAPITransaction> transactionsList, Map<String, TransactionResult> results) {
+            private void serveRejectionListeners(Rejection rejection) {
+                rejectionListeners.forEach((rjListener) -> {
+                    rjListener.rejected("invoke", TID.fromUuidString(rejection.getUuid()), rejection.getErrorMsg(), 1);
+                });
+            }
+
+            private void serveTransactionListeners(List<HLAPITransaction> transactionsList) {
                 for(HLAPITransaction tx : transactionsList) {
                     txListeners.forEach((txListener) -> {
                         try {
-                            TransactionResult result = results.get(tx.getID().toUuidString());
-                            if (0 == Integer.valueOf(result.getErrorCode())) {
-                                txListener.process(tx);
-                            }
+                            // It is possible here to use only TXs that had a zero return value
+                            // TransactionResult result = results.get(tx.getID().toUuidString());
+                            // if (0 == Integer.valueOf(result.getErrorCode())) {
+                            txListener.process(tx);
                         } catch (HLAPIException e) {
                             e.printStackTrace();
-                        }
-                    });
-                }
-            }
-
-            private void serveRejectionListeners(List<HLAPITransaction> transactionsList, Map<String, TransactionResult> results) {
-                for(HLAPITransaction tx : transactionsList) {
-                    rejectionListeners.forEach((rjListener) -> {
-                        TransactionResult result = results.get(tx.getID().toUuidString());
-                        if (0 != Integer.valueOf(result.getErrorCode())) {
-                            rjListener.rejected("invoke", tx.getID(), result.getError(), result.getErrorCode());
                         }
                     });
                 }
@@ -138,13 +133,18 @@ public class GRPCObserver {
 
         StreamObserver<EventsOuterClass.Event> sender = es.chat(receiver);
 
-        EventsOuterClass.Interest interest = EventsOuterClass.Interest.newBuilder()
+        EventsOuterClass.Interest interestB = EventsOuterClass.Interest.newBuilder()
                 .setEventType("block")
+                .setResponseType(EventsOuterClass.Interest.ResponseType.PROTOBUF)
+                .build();
+        EventsOuterClass.Interest interestR = EventsOuterClass.Interest.newBuilder()
+                .setEventType("rejection")
                 .setResponseType(EventsOuterClass.Interest.ResponseType.PROTOBUF)
                 .build();
 
         EventsOuterClass.Register register = EventsOuterClass.Register.newBuilder()
-                .addEvents(0, interest)
+                .addEvents(0, interestB)
+                .addEvents(1, interestR)
                 .build();
 
         EventsOuterClass.Event registerEvent = EventsOuterClass.Event.newBuilder()

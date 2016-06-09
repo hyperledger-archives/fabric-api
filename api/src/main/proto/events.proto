@@ -44,6 +44,14 @@ message Register {
     repeated Interest events = 1;
 }
 
+
+//Rejection is sent by consumers for erroneous transaction rejection events
+//string type - "rejection"
+message Rejection {
+    string Uuid = 1;
+    string ErrorMsg = 2;
+}
+
 //---------- producer events ---------
 //Generic is used for encoding payload as JSON or raw bytes
 //string type - "generic"
@@ -64,6 +72,7 @@ message Event {
         //producer events
         Block block = 2;
         Generic generic = 3;
+        Rejection rejection = 4;
     }
 }
 
