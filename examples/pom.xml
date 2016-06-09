@@ -30,7 +30,6 @@
 
     <modules>
         <module>jmsclient</module>
-        <module>dropwizard</module>
-        <module>grpcclient</module>
+        <module>chainexplorer</module>
     </modules>
 </project>
