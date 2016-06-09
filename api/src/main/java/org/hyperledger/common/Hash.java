@@ -18,6 +18,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
+import org.apache.commons.codec.binary.Hex;
+
 /**
  * A Hash identifies objects, that is blocks and transactions, in the ledger.
  * Technically it is a double SHA256 digest of the object's content.
@@ -119,43 +121,28 @@ public class Hash {
     }
 
     /**
-     * return SHA256 hash of data
-     *
-     * @param data arbitary data
-     * @return SHA256(data)
-     */
-    public static byte[] sha256(byte[] data) {
-        try {
-            MessageDigest a = MessageDigest.getInstance("SHA-256");
-            return a.digest(data);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Double SHA256 hash of arbitrary data
+     * SHA256 hash of arbitrary data
      *
      * @param data   arbitary data
      * @param offset start hashing at this offset (0 starts)
      * @param len    hash len number of bytes
-     * @return SHA256(SHA256(data))
+     * @return SHA256(data)
      */
     public static byte[] hash(byte[] data, int offset, int len) {
         try {
             MessageDigest a = MessageDigest.getInstance("SHA-256");
             a.update(data, offset, len);
-            return a.digest(a.digest());
+            return a.digest();
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
     }
 
     /**
-     * Double SHA256 hash of arbitrary data
+     * SHA256 hash of arbitrary data
      *
      * @param data arbitrary data
-     * @return SHA256(SHA256(data))
+     * @return SHA256(data)
      */
     public static byte[] hash(byte[] data) {
         return hash(data, 0, data.length);
@@ -169,6 +156,29 @@ public class Hash {
      */
     public static Hash of(byte[] data) {
         return new Hash(hash(data, 0, data.length));
+    }
+
+    /**
+     * Create a Hash from a UUID created from the first 128 bits of SHA256
+     *
+     * @return Hash
+     */
+    public static Hash fromUuidString(String uuidStr) {
+        String uuidWoDash = uuidStr.replaceAll("[-]", "");
+        byte[] uuidBytes = ByteUtils.fromHex(uuidWoDash);
+        return new Hash(Arrays.copyOf(uuidBytes, 32));
+    }
+
+    /**
+     * UUID created from the first 128 bits of SHA256
+     *
+     * @return String
+     */
+    public String toUuidString() {
+            String result = String.join("-", contentAsHex(0, 4), contentAsHex(4, 6),
+                                             contentAsHex(6, 8), contentAsHex(8, 10),
+                                             contentAsHex(10, 16));
+            return result.toLowerCase();
     }
 
     /**
@@ -210,5 +220,21 @@ public class Hash {
         if (!Arrays.equals(bytes, hash.bytes)) return false;
 
         return true;
+    }
+
+    public boolean equalsAsUuidString(Object o) {
+        if (this == o)
+            return true;
+        if (o == null)
+            return false;
+        if (!(o instanceof Hash))
+            return false;
+        Hash other = (Hash) o;
+        if (!toUuidString().equals(other.toUuidString())) return false;
+        return true;
+    }
+
+    private String contentAsHex(int i, int j) {
+        return ByteUtils.toHex((Arrays.copyOfRange(bytes, i, j)));
     }
 }
