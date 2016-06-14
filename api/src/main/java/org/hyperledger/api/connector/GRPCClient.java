@@ -12,22 +12,22 @@
  * limitations under the License.
  */
 
-package org.hyperledger.connector;
+package org.hyperledger.api.connector;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import org.hyperledger.api.*;
+import org.hyperledger.block.BID;
+import org.hyperledger.block.Block;
 import org.hyperledger.common.*;
+import org.hyperledger.transaction.TID;
+import org.hyperledger.transaction.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,8 +43,6 @@ import protos.Fabric;
 import protos.OpenchainGrpc;
 import protos.OpenchainGrpc.OpenchainBlockingStub;
 import protos.Api.BlockCount;
-
-import javax.xml.bind.DatatypeConverter;
 
 public class GRPCClient implements HLAPI {
     private static final Logger log = LoggerFactory.getLogger(GRPCClient.class);

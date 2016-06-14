@@ -13,12 +13,8 @@
  */
 package org.hyperledger.api;
 
-import com.google.protobuf.ByteString;
-import org.hyperledger.common.*;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import org.hyperledger.block.BID;
+import org.hyperledger.transaction.Transaction;
 
 public class HLAPITransaction extends Transaction {
 

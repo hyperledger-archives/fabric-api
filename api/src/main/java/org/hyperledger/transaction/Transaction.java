@@ -11,7 +11,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyperledger.common;
+package org.hyperledger.transaction;
+
+import org.hyperledger.common.Hash;
+import org.hyperledger.merkletree.MerkleTreeNode;
 
 /**
  * A transaction in the ledger.

@@ -13,7 +13,12 @@
  */
 package org.hyperledger.api;
 
-import org.hyperledger.common.*;
+import org.hyperledger.block.BID;
+import org.hyperledger.block.Block;
+import org.hyperledger.block.HyperledgerHeader;
+import org.hyperledger.merkletree.MerkleRoot;
+import org.hyperledger.merkletree.MerkleTree;
+import org.hyperledger.merkletree.MerkleTreeNode;
 
 import java.util.ArrayList;
 import java.util.Collections;

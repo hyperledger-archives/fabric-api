@@ -13,6 +13,10 @@
  */
 package org.hyperledger.common;
 
+import org.hyperledger.block.BID;
+import org.hyperledger.block.HyperledgerHeader;
+import org.hyperledger.transaction.TID;
+
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

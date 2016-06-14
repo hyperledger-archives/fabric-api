@@ -13,7 +13,10 @@
  */
 package org.hyperledger.api;
 
-import org.hyperledger.common.*;
+import org.hyperledger.block.BID;
+import org.hyperledger.block.Block;
+import org.hyperledger.transaction.TID;
+import org.hyperledger.transaction.Transaction;
 
 import java.util.List;
 

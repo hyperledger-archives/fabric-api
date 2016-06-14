@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package org.hyperledger.connector;
+package org.hyperledger.api.connector;
 
 import com.google.protobuf.ByteString;
 import io.grpc.Channel;
@@ -20,9 +20,8 @@ import io.grpc.stub.StreamObserver;
 import org.hyperledger.api.HLAPIException;
 import org.hyperledger.api.HLAPITransaction;
 import org.hyperledger.api.TransactionListener;
-import org.hyperledger.common.BID;
-import org.hyperledger.common.TID;
-import org.hyperledger.common.Transaction;
+import org.hyperledger.block.BID;
+import org.hyperledger.transaction.Transaction;
 import protos.Chaincode;
 import protos.EventsGrpc;
 import protos.EventsOuterClass;
