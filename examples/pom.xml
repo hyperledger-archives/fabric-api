@@ -29,7 +29,6 @@
     </parent>
 
     <modules>
-        <module>jmsclient</module>
         <module>chainexplorer</module>
     </modules>
 </project>

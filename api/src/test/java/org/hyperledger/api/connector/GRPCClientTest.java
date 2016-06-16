@@ -17,6 +17,7 @@ import org.hyperledger.api.HLAPIException;
 import org.hyperledger.api.HLAPITransaction;
 import org.hyperledger.transaction.TID;
 import org.hyperledger.transaction.Transaction;
+import org.hyperledger.transaction.TransactionBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -52,7 +53,7 @@ public class GRPCClientTest {
 
     @Test
     public void sendTransaction() throws HLAPIException, InterruptedException {
-        Transaction tx = new Transaction(new byte[100]);
+        Transaction tx = new TransactionBuilder().payload(new byte[100]).build();
 
         int originalHeight = client.getChainHeight();
         client.sendTransaction(tx);

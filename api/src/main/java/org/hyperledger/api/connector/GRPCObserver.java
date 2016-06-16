@@ -49,7 +49,7 @@ public class GRPCObserver {
                         Chaincode.ChaincodeInvocationSpec invocationSpec = Chaincode.ChaincodeInvocationSpec.parseFrom(invocationSpecBytes);
                         String transactionString = invocationSpec.getChaincodeSpec().getCtorMsg().getArgs(0);
                         byte[] transactionBytes = DatatypeConverter.parseBase64Binary(transactionString);
-                        HLAPITransaction tx = new HLAPITransaction(new Transaction(transactionBytes), BID.INVALID);
+                        HLAPITransaction tx = new HLAPITransaction(Transaction.fromByteArray(transactionBytes), BID.INVALID);
                         listener.process(tx);
                     } catch (HLAPIException | IOException e) {
                         e.printStackTrace();
