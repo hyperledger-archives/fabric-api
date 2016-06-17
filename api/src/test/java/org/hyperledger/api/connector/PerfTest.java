@@ -35,12 +35,13 @@ import static org.junit.Assert.*;
 
 public class PerfTest {
 
-    private static final int SIZE = 10000;
+    private static final int SIZE = 1000;
     private static final int NR_OF_GROUPS = 10;
     private static final int CHUNK_SIZE = SIZE / NR_OF_GROUPS;
     private static final int NR_OF_CONCURRENT_TRANSACTIONS = 500;
 
-    private final HLAPI api = new GRPCClient("localhost", 30303, 31315);
+//    private final HLAPI api = new GRPCClient("localhost", 30303, 31315);
+    private final HLAPI api = new DummyFabric();
     private final TransactionListener listener;
     private final List<MeasurableTransaction> txs;
     private final Map<TID, MeasurableTransaction> txMap;

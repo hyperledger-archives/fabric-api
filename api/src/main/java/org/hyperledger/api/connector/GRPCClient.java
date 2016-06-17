@@ -18,6 +18,7 @@ package org.hyperledger.api.connector;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
+import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import org.hyperledger.api.*;
@@ -65,11 +66,11 @@ public class GRPCClient implements HLAPI {
         observer.connect();
     }
 
-    public void invoke(String chaincodeName, byte[] transaction) {
+    private void invoke(String chaincodeName, byte[] transaction) {
         invoke(chaincodeName, "execute", transaction);
     }
 
-    public void invoke(String chaincodeName, String functionName, byte[] transaction) {
+    private void invoke(String chaincodeName, String functionName, byte[] transaction) {
         String encodedTransaction = Base64.getEncoder().encodeToString(transaction);
 
         ChaincodeID.Builder chaincodeId = ChaincodeID.newBuilder();
@@ -157,13 +158,19 @@ public class GRPCClient implements HLAPI {
 
     @Override
     public HLAPITransaction getTransaction(TID hash) throws HLAPIException {
-        ByteString result = query("getTran", Collections.singletonList(hash.toUuidString()));
-        byte[] resultStr = result.toByteArray();
-        if (resultStr.length == 0) return null;
         try {
+            ByteString result = query("getTran", Collections.singletonList(hash.toUuidString()));
+            byte[] resultStr = result.toByteArray();
+            if (resultStr.length == 0) return null;
             Transaction t = Transaction.fromByteArray(resultStr);
             if (!hash.equals(t.getID())) return null;
             return new HLAPITransaction(t, BID.INVALID);
+        } catch (StatusRuntimeException e) {
+            if (e.getMessage().contains("ledger: resource not found")) {
+                return null;
+            } else {
+                throw e;
+            }
         } catch (IOException e) {
             throw new HLAPIException(e);
         }

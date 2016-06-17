@@ -15,21 +15,31 @@
  */
 package org.hyperledger.api.connector;
 
+import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public class OpenTransactionLimiter {
-    private final Semaphore slots;
+    private final Optional<Semaphore> slots;
 
     public OpenTransactionLimiter(int limit) {
-        slots = new Semaphore(limit);
+        if (limit == 0) {
+            slots = Optional.empty();
+        } else {
+            slots = Optional.of(new Semaphore(limit));
+        }
     }
 
     public void newTx() {
+            slots.map(OpenTransactionLimiter::acquire);
+    }
+
+    private static boolean acquire(Semaphore s) {
         try {
-            boolean success = slots.tryAcquire(1, TimeUnit.MINUTES);
-            if (!success) {
-                throw new RuntimeException("Too much wait for sending transaction");
+            if (s.tryAcquire(1, TimeUnit.MINUTES)) {
+                return true;
+            } else {
+                throw new RuntimeException("Too much wait for send");
             }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -37,6 +47,11 @@ public class OpenTransactionLimiter {
     }
 
     public void completeTx() {
-        slots.release();
+        slots.map(OpenTransactionLimiter::release);
+    }
+
+    private static boolean release(Semaphore s) {
+        s.release();
+        return true;
     }
 }
