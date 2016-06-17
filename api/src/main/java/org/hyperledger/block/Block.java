@@ -11,7 +11,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyperledger.common;
+package org.hyperledger.block;
+
+import org.hyperledger.common.*;
+import org.hyperledger.merkletree.MerkleRoot;
+import org.hyperledger.merkletree.MerkleTree;
+import org.hyperledger.merkletree.MerkleTreeNode;
+import org.hyperledger.transaction.Transaction;
 
 import java.time.LocalTime;
 import java.util.ArrayList;

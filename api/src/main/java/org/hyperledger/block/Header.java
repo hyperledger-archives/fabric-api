@@ -11,24 +11,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyperledger.common;
+package org.hyperledger.block;
 
-/**
- * A node in the merkle tree.
- * It holds the id of a transaction at the leafs and digest of digests on higher level
- */
-public interface MerkleTreeNode {
-    /**
-     * The ID of the transaction if a leaf node otherwise digest of digests
-     *
-     * @return
-     */
-    Hash getID();
+import org.hyperledger.merkletree.MerkleRoot;
 
-    /**
-     * The height in the tree. 0 is leaf.
-     *
-     * @return
-     */
-    int getMerkleHeight();
+import java.time.LocalTime;
+
+public interface Header {
+    BID getID();
+
+    BID getPreviousID();
+
+    MerkleRoot getMerkleRoot();
+
+    @Deprecated
+    int getCreateTime();
+
+    LocalTime getLocalCreateTime();
 }

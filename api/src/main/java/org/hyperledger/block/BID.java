@@ -11,31 +11,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyperledger.common;
+package org.hyperledger.block;
 
-public class MerkleRoot extends Hash {
-    public static final MerkleRoot INVALID = new MerkleRoot(new byte[32]);
+import org.hyperledger.common.Hash;
 
-    public MerkleRoot(Hash hash) {
+/**
+ * A Block or header ID
+ * This is technically a cryptographic hash of the header content.
+ * <p>
+ * Introducing this class to allow other implementations of the ID and to
+ * ensure transaction IDs are not mixed up with block/header IDs
+ */
+public class BID extends Hash {
+    public static final BID INVALID = new BID(new byte[32]);
+
+    public BID(Hash hash) {
         super(hash.unsafeGetArray());
     }
 
-    public MerkleRoot(byte[] hash) {
+    public BID(byte[] hash) {
         super(hash);
     }
 
-    public MerkleRoot(String hex) {
-        super(hex);
-    }
-
-    private MerkleRoot(byte[] hash, boolean safe) {
+    private BID(byte[] hash, boolean safe) {
         super(hash, safe);
     }
 
-    public static MerkleRoot createFromSafeArray(byte[] hash) {
+    public static BID createFromSafeArray(byte[] hash) {
         if (hash.length != 32) {
             throw new IllegalArgumentException("Digest length must be 32 bytes for Hash");
         }
-        return new MerkleRoot(hash, true);
+        return new BID(hash, true);
+    }
+
+    public BID(String hex) {
+        super(hex);
     }
 }

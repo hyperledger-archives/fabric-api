@@ -11,7 +11,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyperledger.common;
+package org.hyperledger.merkletree;
+
+import org.hyperledger.common.Hash;
+import org.hyperledger.merkletree.MerkleTreeNode;
 
 /**
  * PrunedNode is a MerkleTreeNode that may be compressed into other PrunedNodes

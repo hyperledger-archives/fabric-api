@@ -13,7 +13,11 @@
  */
 package org.hyperledger.api;
 
-import org.hyperledger.common.*;
+import org.hyperledger.block.BID;
+import org.hyperledger.block.Header;
+import org.hyperledger.block.HeaderBuilder;
+import org.hyperledger.block.HyperledgerHeader;
+import org.hyperledger.merkletree.MerkleRoot;
 
 import java.time.LocalTime;
 

@@ -11,7 +11,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyperledger.common;
+package org.hyperledger.block;
+
+import org.hyperledger.merkletree.MerkleRoot;
 
 public class HeaderBuilder<T extends HeaderBuilder> {
     protected int version;

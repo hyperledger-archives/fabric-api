@@ -11,38 +11,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyperledger.common;
+package org.hyperledger.transaction;
+
+import org.hyperledger.common.Hash;
 
 /**
- * A Block or header ID
- * This is technically a cryptographic hash of the header content.
+ * A Transaction ID
+ * This is technically a cryptographic hash of its content.
+ * Bitcoin hashes the entire transaction content that makes reference to
+ * unsigned or partially signed transaction impractical.
  * <p>
  * Introducing this class to allow other implementations of the ID and to
  * ensure transaction IDs are not mixed up with block/header IDs
  */
-public class BID extends Hash {
-    public static final BID INVALID = new BID(new byte[32]);
+public class TID extends Hash {
+    public static final TID INVALID = new TID(new byte[32]);
+    // TODO in Sidechain Elements this is the genesis block hash
+    public static final TID BITCOIN_NATIVE = new TID(new byte[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
 
-    public BID(Hash hash) {
+    public TID(Hash hash) {
         super(hash.unsafeGetArray());
     }
 
-    public BID(byte[] hash) {
+    public TID(byte[] hash) {
         super(hash);
     }
 
-    private BID(byte[] hash, boolean safe) {
+    public TID(String hex) {
+        super(hex);
+    }
+
+    private TID(byte[] hash, boolean safe) {
         super(hash, safe);
     }
 
-    public static BID createFromSafeArray(byte[] hash) {
+    public static TID createFromSafeArray(byte[] hash) {
         if (hash.length != 32) {
             throw new IllegalArgumentException("Digest length must be 32 bytes for Hash");
         }
-        return new BID(hash, true);
-    }
-
-    public BID(String hex) {
-        super(hex);
+        return new TID(hash, true);
     }
 }
