@@ -14,10 +14,6 @@
 
 package org.hyperledger.api.connector;
 
-import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
-
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.NegotiationType;
@@ -25,12 +21,12 @@ import io.grpc.netty.NettyChannelBuilder;
 import org.hyperledger.api.*;
 import org.hyperledger.block.BID;
 import org.hyperledger.block.Block;
-import org.hyperledger.common.*;
+import org.hyperledger.common.ByteUtils;
 import org.hyperledger.transaction.TID;
 import org.hyperledger.transaction.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import protos.Api.BlockCount;
 import protos.Chaincode;
 import protos.Chaincode.ChaincodeID;
 import protos.Chaincode.ChaincodeInput;
@@ -38,11 +34,14 @@ import protos.Chaincode.ChaincodeInvocationSpec;
 import protos.Chaincode.ChaincodeSpec;
 import protos.DevopsGrpc;
 import protos.DevopsGrpc.DevopsBlockingStub;
-
 import protos.Fabric;
 import protos.OpenchainGrpc;
 import protos.OpenchainGrpc.OpenchainBlockingStub;
-import protos.Api.BlockCount;
+
+import java.io.IOException;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
 
 public class GRPCClient implements HLAPI {
     private static final Logger log = LoggerFactory.getLogger(GRPCClient.class);
@@ -157,14 +156,20 @@ public class GRPCClient implements HLAPI {
         ByteString result = query("getTran", Collections.singletonList(hexedHash));
         byte[] resultStr = result.toByteArray();
         if (resultStr.length == 0) return null;
-        Transaction t = new Transaction(resultStr);
-        if (!hash.equals(t.getID())) return null;
-        return new HLAPITransaction(new Transaction(resultStr), BID.INVALID);
+        try {
+            Transaction t = Transaction.fromByteArray(resultStr);
+            if (!hash.equals(t.getID())) return null;
+            return new HLAPITransaction(t, BID.INVALID);
+        } catch (IOException e) {
+            throw new HLAPIException(e);
+        }
     }
 
     @Override
     public void sendTransaction(Transaction transaction) throws HLAPIException {
-        invoke(chaincodeName, transaction.getPayload());
+        byte[] t = transaction.toByteArray();
+        log.debug("Sending transaction of size {}", t.length);
+        invoke(chaincodeName, t);
     }
 
     @Override
