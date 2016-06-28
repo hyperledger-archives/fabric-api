@@ -131,8 +131,7 @@ public class GRPCObserver {
         StreamObserver<EventsOuterClass.Event> sender = es.chat(receiver);
 
         EventsOuterClass.Interest interest = EventsOuterClass.Interest.newBuilder()
-                .setEventType("block")
-                .setResponseType(EventsOuterClass.Interest.ResponseType.PROTOBUF)
+                .setEventType(EventsOuterClass.EventType.BLOCK)
                 .build();
 
         EventsOuterClass.Register register = EventsOuterClass.Register.newBuilder()

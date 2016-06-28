@@ -84,7 +84,7 @@ public class GRPCClient implements HLAPI {
         chaincodeSpec.setCtorMsg(chaincodeInput);
 
         ChaincodeInvocationSpec.Builder chaincodeInvocationSpec = ChaincodeInvocationSpec.newBuilder();
-        chaincodeInvocationSpec.setChaincodeSpec(chaincodeSpec).setUuidGenerationAlg("sha256base64");
+        chaincodeInvocationSpec.setChaincodeSpec(chaincodeSpec).setIdGenerationAlg("sha256base64");
 
         dbs.invoke(chaincodeInvocationSpec.build());
     }
