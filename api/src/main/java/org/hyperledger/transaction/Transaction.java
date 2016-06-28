@@ -76,6 +76,21 @@ public class Transaction implements MerkleTreeNode {
         return endorser.verify(hash, key);
     }
 
+    @Override
+    public int hashCode() {
+        return ID.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Transaction) {
+            Transaction other = (Transaction) obj;
+            return ID.equals(other.ID);
+        } else {
+            return false;
+        }
+    }
+
     public byte[] toByteArray() {
         try {
             return toByteArray(payload, endorsers);
