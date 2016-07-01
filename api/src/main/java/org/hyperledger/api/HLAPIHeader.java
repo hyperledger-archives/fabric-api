@@ -50,6 +50,11 @@ public class HLAPIHeader implements Header {
         public HLAPIHeader build() {
             return new HLAPIHeader(new HyperledgerHeader(previousID, merkleRoot, createTime), height);
         }
+
+        @Override
+        protected Builder getThis() {
+            return this;
+        }
     }
 
     public int getHeight() {

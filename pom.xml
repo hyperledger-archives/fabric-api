@@ -109,6 +109,9 @@ limitations under the License.
                     <source>${java.compiler.version}</source>
                     <target>${java.compiler.version}</target>
                     <encoding>UTF-8</encoding>
+                    <compilerArgument>-Xlint:all</compilerArgument>
+                    <showWarnings>true</showWarnings>
+                    <showDeprecation>true</showDeprecation>
                 </configuration>
             </plugin>
             <plugin>
