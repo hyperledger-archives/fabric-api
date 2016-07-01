@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.hyperledger.transaction;
+package org.hyperledger.common;
 
 import org.apache.avro.Schema;
 import org.apache.avro.io.*;
@@ -24,6 +24,11 @@ import org.apache.avro.specific.SpecificRecord;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.function.Function;
+
+import static java.util.stream.Collectors.toList;
 
 public class AvroSerializer {
 
@@ -41,5 +46,17 @@ public class AvroSerializer {
         SpecificDatumReader<T> reader = new SpecificDatumReader<>(schema);
         Decoder decoder = DecoderFactory.get().binaryDecoder(data, null);
         return reader.read(null, decoder);
+    }
+
+    public static <T> List<ByteBuffer> toByteBufferList(List<T> list, Function<T, byte[]> encoder) {
+        return list.stream()
+                .map(item -> ByteBuffer.wrap(encoder.apply(item)))
+                .collect(toList());
+    }
+
+    public static <T> List<T> fromByteBufferList(List<ByteBuffer> list, Function<byte[], T> decoder) {
+        return list.stream()
+                .map(item -> decoder.apply(item.array()))
+                .collect(toList());
     }
 }

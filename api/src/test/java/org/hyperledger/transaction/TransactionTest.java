@@ -22,31 +22,35 @@ import org.hyperledger.common.PrivateKey;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Random;
 
 import static org.junit.Assert.*;
 
 public class TransactionTest {
 
-    private Cryptography crypto = new BouncyCastleCrypto();
+    private static final Random random = new Random();
+    private static final Cryptography crypto = new BouncyCastleCrypto();
 
     @Test
     public void serialization() throws IOException {
-        Transaction original = new TransactionBuilder()
-                .payload(randomBytes(100))
-                .endorsers(Collections.singletonList(new Endorser(randomBytes(32))))
-                .build();
-
+        Transaction original = randomTx();
         byte[] serialized = original.toByteArray();
         Transaction result = Transaction.fromByteArray(serialized);
 
-        assertEquals(original.getID(), result.getID());
+        assertEquals(original, result);
     }
 
-    private byte[] randomBytes(int length) {
+    public static Transaction randomTx() {
+        return new TransactionBuilder()
+                .input(new TID(randomBytes(32)))
+                .output(randomBytes(100))
+                .endorse(PrivateKey.createNew(crypto))
+                .build();
+    }
+
+    private static byte[] randomBytes(int length) {
         byte[] payload = new byte[length];
-        new Random().nextBytes(payload);
+        random.nextBytes(payload);
         return payload;
     }
 
@@ -55,7 +59,7 @@ public class TransactionTest {
         PrivateKey key = PrivateKey.createNew(crypto);
 
         Transaction t = new TransactionBuilder()
-                .payload(randomBytes(100))
+                .output(randomBytes(100))
                 .endorse(key)
                 .build();
 
@@ -68,7 +72,7 @@ public class TransactionTest {
         PrivateKey key2 = PrivateKey.createNew(crypto);
 
         Transaction t = new TransactionBuilder()
-                .payload(randomBytes(100))
+                .output(randomBytes(100))
                 .endorse(key1)
                 .build();
 
