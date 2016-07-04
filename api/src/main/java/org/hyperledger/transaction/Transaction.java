@@ -15,6 +15,7 @@
  */
 package org.hyperledger.transaction;
 
+import org.hyperledger.common.AvroSerializer;
 import org.hyperledger.common.Hash;
 import org.hyperledger.common.PublicKey;
 import org.hyperledger.merkletree.MerkleTreeNode;
@@ -24,24 +25,26 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
-
-import static java.util.stream.Collectors.toList;
+import java.util.function.Function;
 
 public class Transaction implements MerkleTreeNode {
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
 
     private final TID ID;
-    private final byte[] payload;
+    private final List<TID> inputs;
+    private final List<byte[]> outputs;
     private final List<Endorser> endorsers;
 
-    public Transaction(byte[] payload, List<Endorser> endorsers) {
-        this.payload = payload;
+    public Transaction(List<TID> inputs, List<byte[]> outputs, List<Endorser> endorsers) {
+        this.inputs = inputs;
+        this.outputs = outputs;
         this.endorsers = endorsers;
         this.ID = new TID(Hash.of(toByteArray()));
     }
 
-    public Transaction(Transaction t) {
-        payload = t.payload;
+    protected Transaction(Transaction t) {
+        inputs = t.inputs;
+        outputs = t.outputs;
         endorsers = t.endorsers;
         ID = t.ID;
     }
@@ -59,8 +62,12 @@ public class Transaction implements MerkleTreeNode {
         return ID;
     }
 
-    public byte[] getPayload() {
-        return payload;
+    public List<TID> getInputs() {
+        return inputs;
+    }
+
+    public List<byte[]> getOutputs() {
+        return outputs;
     }
 
     public List<Endorser> getEndorsers() {
@@ -72,7 +79,7 @@ public class Transaction implements MerkleTreeNode {
      * of the provided public key.
      */
     public boolean verify(Endorser endorser, PublicKey key) {
-        byte[] hash = Hash.of(payload).toByteArray();
+        byte[] hash = Hash.of(outputs.get(0)).toByteArray();
         return endorser.verify(hash, key);
     }
 
@@ -91,22 +98,28 @@ public class Transaction implements MerkleTreeNode {
         }
     }
 
+    @Override
+    public String toString() {
+        return "TID=" + ID.toString();
+    }
+
     public byte[] toByteArray() {
         try {
-            return toByteArray(payload, endorsers);
+            return toByteArray(inputs, outputs, endorsers);
         } catch (IOException e) {
             log.error("Failed to serialize transaction {}: {}", ID, e.getMessage());
             return new byte[0];
         }
     }
 
-    public static byte[] toByteArray(byte[] payload, List<Endorser> endorsers) throws IOException {
-        List<ByteBuffer> endorserBytes = endorsers.stream()
-                .map(endorser -> ByteBuffer.wrap(endorser.getSignature()))
-                .collect(toList());
+    public static byte[] toByteArray(List<TID> inputs, List<byte[]> outputs, List<Endorser> endorsers) throws IOException {
+        List<ByteBuffer> inputBytes = AvroSerializer.toByteBufferList(inputs, TID::toByteArray);
+        List<ByteBuffer> outputBytes = AvroSerializer.toByteBufferList(outputs, Function.identity());
+        List<ByteBuffer> endorserBytes = AvroSerializer.toByteBufferList(endorsers, Endorser::getSignature);
 
         SerializedTransaction t = SerializedTransaction.newBuilder()
-                .setPayload(ByteBuffer.wrap(payload))
+                .setInputs(inputBytes)
+                .setOutputs(outputBytes)
                 .setEndorsers(endorserBytes)
                 .build();
 
@@ -116,12 +129,13 @@ public class Transaction implements MerkleTreeNode {
     public static Transaction fromByteArray(byte[] array) throws IOException {
         SerializedTransaction t = AvroSerializer.deserialize(array, SerializedTransaction.getClassSchema());
 
-        List<Endorser> endorsers = t.getEndorsers().stream()
-                .map(endorser -> new Endorser(endorser.array()))
-                .collect(toList());
+        List<TID> inputs = AvroSerializer.fromByteBufferList(t.getInputs(), TID::new);
+        List<byte[]> outputs = AvroSerializer.fromByteBufferList(t.getOutputs(), Function.identity());
+        List<Endorser> endorsers = AvroSerializer.fromByteBufferList(t.getEndorsers(), Endorser::new);
 
         return new TransactionBuilder()
-                .payload(t.getPayload().array())
+                .inputs(inputs)
+                .outputs(outputs)
                 .endorsers(endorsers)
                 .build();
     }

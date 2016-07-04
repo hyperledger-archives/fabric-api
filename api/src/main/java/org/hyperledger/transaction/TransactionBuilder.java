@@ -24,12 +24,28 @@ import java.util.List;
 
 public class TransactionBuilder {
 
-    private byte[] payload = new byte[0];
-    private List<Endorser> endorsers = new ArrayList<>();
-    private List<PrivateKey> endorserKeys = new ArrayList<>();
+    private final List<TID> inputs = new ArrayList<>();
+    private final List<byte[]> outputs = new ArrayList<>();
+    private final List<Endorser> endorsers = new ArrayList<>();
+    private final List<PrivateKey> endorserKeys = new ArrayList<>();
 
-    public TransactionBuilder payload(byte[] payload) {
-        this.payload = payload;
+    public TransactionBuilder inputs(List<TID> inputs) {
+        this.inputs.addAll(inputs);
+        return this;
+    }
+
+    public TransactionBuilder input(TID input) {
+        inputs.add(input);
+        return this;
+    }
+
+    public TransactionBuilder outputs(List<byte[]> outputs) {
+        this.outputs.addAll(outputs);
+        return this;
+    }
+
+    public TransactionBuilder output(byte[] output) {
+        outputs.add(output);
         return this;
     }
 
@@ -45,10 +61,10 @@ public class TransactionBuilder {
 
     public Transaction build() {
         for (PrivateKey key : endorserKeys) {
-            Endorser endorser = Endorser.create(Hash.of(payload).toByteArray(), key);
+            Endorser endorser = Endorser.create(Hash.of(outputs.get(0)).toByteArray(), key);
             endorsers.add(endorser);
         }
-        return new Transaction(payload, endorsers);
+        return new Transaction(inputs, outputs, endorsers);
     }
 
 }

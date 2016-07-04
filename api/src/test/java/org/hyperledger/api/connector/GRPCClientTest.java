@@ -21,7 +21,7 @@ import org.hyperledger.api.*;
 import org.hyperledger.common.Hash;
 import org.hyperledger.transaction.TID;
 import org.hyperledger.transaction.Transaction;
-import org.hyperledger.transaction.TransactionBuilder;
+import org.hyperledger.transaction.TransactionTest;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,7 +31,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class GRPCClientTest {
     private static final Logger log = LoggerFactory.getLogger(GRPCClientTest.class);
@@ -64,24 +65,25 @@ public class GRPCClientTest {
 
     @Test
     public void sendTransaction() throws HLAPIException, InterruptedException {
-        Transaction tx = new TransactionBuilder().payload(new byte[100]).build();
+        Transaction tx = TransactionTest.randomTx();
 
         int originalHeight = client.getChainHeight();
         client.sendTransaction(tx);
 
         Thread.sleep(1500);
+
         HLAPITransaction res = client.getTransaction(tx.getID());
-        assertEquals(tx.getID(), res.getID());
-        assertArrayEquals(tx.getPayload(), res.getPayload());
+        assertEquals(tx, res);
+
         int newHeight = client.getChainHeight();
-        assertTrue(newHeight == originalHeight + 1);
+        assertEquals(originalHeight + 1, newHeight);
     }
 
     @Test
     public void transactionListener() throws HLAPIException, InterruptedException {
-        Transaction tx1 = new TransactionBuilder().payload(new byte[100]).build();
-        Transaction tx2 = new TransactionBuilder().payload(new byte[90]).build();
-        Transaction tx3 = new TransactionBuilder().payload(new byte[95]).build();
+        Transaction tx1 = TransactionTest.randomTx();
+        Transaction tx2 = TransactionTest.randomTx();
+        Transaction tx3 = TransactionTest.randomTx();
         class TestListener implements TransactionListener {
             private byte processedTxCount = 0;
 
@@ -115,8 +117,8 @@ public class GRPCClientTest {
 
     @Test
     public void trunkListener() throws HLAPIException, InterruptedException {
-        Transaction tx1 = new TransactionBuilder().payload(new byte[100]).build();
-        Transaction tx2 = new TransactionBuilder().payload(new byte[90]).build();
+        Transaction tx1 = TransactionTest.randomTx();
+        Transaction tx2 = TransactionTest.randomTx();
         class TestListener implements TrunkListener {
             private byte processedBlockCount = 0;
             private byte processedTxCount = 0;
@@ -156,8 +158,8 @@ public class GRPCClientTest {
 
     @Test
     public void rejectListener() throws HLAPIException, InterruptedException {
-        Transaction tx1 = new TransactionBuilder().payload(new byte[100]).build();
-        Transaction tx2 = new TransactionBuilder().payload(new byte[90]).build();
+        Transaction tx1 = TransactionTest.randomTx();
+        Transaction tx2 = TransactionTest.randomTx();
         class TestListener implements RejectListener {
             private byte processedRejectionCount = 0;
 
