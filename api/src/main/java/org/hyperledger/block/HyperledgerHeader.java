@@ -46,6 +46,11 @@ public class HyperledgerHeader implements Header {
         public HyperledgerHeader build() {
             return new HyperledgerHeader(previousID, merkleRoot, createTime);
         }
+
+        @Override
+        protected Builder getThis() {
+            return this;
+        }
     }
 
     /**

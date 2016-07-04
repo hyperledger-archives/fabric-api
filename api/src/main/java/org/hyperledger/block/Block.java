@@ -91,7 +91,7 @@ public class Block {
      * block builder helper class
      */
     public static class Builder {
-        private static final Header INVALID_HEADER = ((HyperledgerHeader.Builder) HyperledgerHeader.create().previousID(BID.INVALID)).build();
+        private static final Header INVALID_HEADER = HyperledgerHeader.create().previousID(BID.INVALID).build();
         protected List<Transaction> transactions = new ArrayList<>();
         private Header header = INVALID_HEADER;
 

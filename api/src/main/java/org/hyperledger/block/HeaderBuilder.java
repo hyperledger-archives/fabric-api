@@ -17,7 +17,7 @@ package org.hyperledger.block;
 
 import org.hyperledger.merkletree.MerkleRoot;
 
-public class HeaderBuilder<T extends HeaderBuilder> {
+public abstract class HeaderBuilder<T extends HeaderBuilder<T>> {
     protected int version;
     protected BID previousID;
     protected MerkleRoot merkleRoot = MerkleRoot.INVALID;
@@ -30,31 +30,33 @@ public class HeaderBuilder<T extends HeaderBuilder> {
 
     public T version(int version) {
         this.version = version;
-        return (T) this;
+        return getThis();
     }
 
     public T previousID(BID previousHash) {
         this.previousID = previousHash;
-        return (T) this;
+        return getThis();
     }
 
     public T merkleRoot(MerkleRoot merkleRoot) {
         this.merkleRoot = merkleRoot;
-        return (T) this;
+        return getThis();
     }
 
     public T createTime(int createTime) {
         this.createTime = createTime;
-        return (T) this;
+        return getThis();
     }
 
     public T difficultyTarget(int difficultyTarget) {
         this.difficultyTarget = difficultyTarget;
-        return (T) this;
+        return getThis();
     }
 
     public T nonce(int nonce) {
         this.nonce = nonce;
-        return (T) this;
+        return getThis();
     }
+
+    protected abstract T getThis();
 }
