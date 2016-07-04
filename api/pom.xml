@@ -31,17 +31,6 @@
     <build>
         <plugins>
             <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
-                <configuration>
-                    <includes>
-                        <include>target/generated-sources</include>
-                    </includes>
-                    <compilerArgument>-Xlint:none</compilerArgument>
-                    <generatedSourcesDirectory>target/generated-sources</generatedSourcesDirectory>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
                 <version>0.5.0</version>
