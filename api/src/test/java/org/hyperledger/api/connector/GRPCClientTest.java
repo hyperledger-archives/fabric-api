@@ -15,33 +15,33 @@
  */
 package org.hyperledger.api.connector;
 
-import io.grpc.StatusRuntimeException;
-import org.hamcrest.CoreMatchers;
-import org.hyperledger.api.*;
-import org.hyperledger.common.Hash;
+import org.hyperledger.api.HLAPI;
+import org.hyperledger.api.HLAPIBlock;
+import org.hyperledger.api.HLAPIException;
+import org.hyperledger.api.HLAPITransaction;
 import org.hyperledger.transaction.TID;
 import org.hyperledger.transaction.Transaction;
 import org.hyperledger.transaction.TransactionTest;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class GRPCClientTest {
     private static final Logger log = LoggerFactory.getLogger(GRPCClientTest.class);
 
-    GRPCClient client;
+    private HLAPI client;
+    private OpenTransactionLimiter unlimited = new OpenTransactionLimiter(0);
 
     @Before
     public void setUp() {
-        client = new GRPCClient("localhost", 30303, 31315);
+        client = new DummyFabric();
+//        client = new GRPCClient("localhost", 30303, 31315);
     }
 
     @Test
@@ -53,14 +53,9 @@ public class GRPCClientTest {
         assertTrue(height > 0);
     }
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
     public void getNonExistingTransaction() throws HLAPIException {
-        thrown.expect(StatusRuntimeException.class);
-        thrown.expectMessage(CoreMatchers.containsString("ledger: resource not found"));
-        client.getTransaction(TID.INVALID);
+        assertNull(client.getTransaction(TID.INVALID));
     }
 
     @Test
@@ -80,112 +75,79 @@ public class GRPCClientTest {
     }
 
     @Test
-    public void transactionListener() throws HLAPIException, InterruptedException {
-        Transaction tx1 = TransactionTest.randomTx();
-        Transaction tx2 = TransactionTest.randomTx();
-        Transaction tx3 = TransactionTest.randomTx();
-        class TestListener implements TransactionListener {
-            private byte processedTxCount = 0;
+    public void transactionListener() throws HLAPIException, InterruptedException, ExecutionException {
+        MeasurableTransaction tx1 = new MeasurableTransaction(TransactionTest.randomTx(), unlimited);
+        MeasurableTransaction tx2 = new MeasurableTransaction(TransactionTest.randomTx(), unlimited);
 
-            public byte getProcessedTxCount() {
-                return processedTxCount;
+        client.registerTransactionListener(t -> {
+            if (t.equals(tx1.tx)) {
+                tx1.complete();
+            } else if (t.equals(tx2.tx)) {
+                tx2.complete();
+            } else {
+                fail("Unknown transaction");
             }
+        });
 
-            @Override
-            public void process(HLAPITransaction t) throws HLAPIException {
-                processedTxCount++;
-                System.out.println(t.getID().toString());
-            }
+        tx1.send(client);
+        tx2.send(client);
 
-        }
-        TestListener listener = new TestListener();
-        client.registerTransactionListener(listener);
-
-        client.sendTransaction(tx1);
-        client.sendTransaction(tx2);
-        client.invoke(client.chaincodeName, "some-fake-function-name", tx3.toByteArray());
-
-        byte expectedTxCount = 2;
-        byte counter = 3;
-        while (counter != 0 && expectedTxCount != listener.getProcessedTxCount()) {
-            Thread.sleep(1000);
-            counter--;
-        }
-        client.removeTransactionListener(listener);
-        assertEquals(expectedTxCount, listener.getProcessedTxCount());
+        tx1.get();
+        tx2.get();
     }
 
     @Test
-    public void trunkListener() throws HLAPIException, InterruptedException {
-        Transaction tx1 = TransactionTest.randomTx();
-        Transaction tx2 = TransactionTest.randomTx();
-        class TestListener implements TrunkListener {
-            private byte processedBlockCount = 0;
-            private byte processedTxCount = 0;
+    public void trunkListener() throws HLAPIException, InterruptedException, ExecutionException {
+        MeasurableTransaction tx1 = new MeasurableTransaction(TransactionTest.randomTx(), unlimited);
+        MeasurableTransaction tx2 = new MeasurableTransaction(TransactionTest.randomTx(), unlimited);
 
-            public byte getProcessedTxCount() {
-                return processedTxCount;
-            }
-
-            public byte getProcessedBlockCount() {
-                return processedBlockCount;
-            }
-
-            @Override
-            public void trunkUpdate(List<HLAPIBlock> added) {
-                processedBlockCount += added.size();
-                for (HLAPIBlock b : added) {
-                    processedTxCount += b.getTransactions().size();
+        client.registerTrunkListener(added -> {
+            for (HLAPIBlock block : added) {
+                boolean listenerCalled = false;
+                if (block.getTransactions().contains(tx1.tx)) {
+                    listenerCalled = true;
+                    tx1.complete();
+                }
+                if (block.getTransactions().contains(tx2.tx)) {
+                    listenerCalled = true;
+                    tx2.complete();
+                }
+                if (!listenerCalled) {
+                    fail("Block containing no known transaction");
                 }
             }
-        }
-        TestListener listener = new TestListener();
-        client.registerTrunkListener(listener);
-        client.invoke(client.chaincodeName, "some-fake-function-name", tx1.toByteArray());
-        client.sendTransaction(tx2);
+        });
 
-        byte expectedBlockCount = 1;
-        byte expectedTxCount = 2;
-        byte counter = 3;
-        while (counter != 0 && expectedTxCount != listener.getProcessedTxCount()) {
-            Thread.sleep(1000);
-            counter--;
-        }
-        client.removeTrunkListener(listener);
-        assertEquals(expectedBlockCount, listener.getProcessedBlockCount());
-        assertEquals(expectedTxCount, listener.getProcessedTxCount());
+        tx1.send(client);
+        tx2.send(client);
+
+        tx1.get();
+        tx2.get();
     }
 
     @Test
-    public void rejectListener() throws HLAPIException, InterruptedException {
-        Transaction tx1 = TransactionTest.randomTx();
-        Transaction tx2 = TransactionTest.randomTx();
-        class TestListener implements RejectListener {
-            private byte processedRejectionCount = 0;
+    public void rejectListener() throws HLAPIException, InterruptedException, ExecutionException {
+        class InvalidTransaction extends Transaction {
 
-            public byte getProcessedTxCount() {
-                return processedRejectionCount;
+            public InvalidTransaction() {
+                super(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
             }
 
             @Override
-            public void rejected(String command, Hash hash, String reason, int rejectionCode) {
-                processedRejectionCount++;
+            public byte[] toByteArray() {
+                return new byte[0];
             }
         }
-        TestListener listener = new TestListener();
-        client.registerRejectListener(listener);
 
-        client.invoke(client.chaincodeName, "some-fake-function-name", tx1.toByteArray());
-        client.sendTransaction(tx2);
+        MeasurableTransaction tx = new MeasurableTransaction(new InvalidTransaction(), unlimited);
 
-        byte expectedTxCount = 1;
-        byte counter = 3;
-        while (counter != 0 && expectedTxCount != listener.getProcessedTxCount()) {
-            Thread.sleep(1000);
-            counter--;
-        }
-        client.removeRejectListener(listener);
-        assertEquals(expectedTxCount, listener.getProcessedTxCount());
+        client.registerRejectListener((command, hash, reason, rejectionCode) -> {
+            tx.complete();
+        });
+
+        tx.send(client);
+
+        tx.get();
     }
 
 }
