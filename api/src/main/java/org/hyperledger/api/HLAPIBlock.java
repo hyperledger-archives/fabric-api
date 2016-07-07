@@ -35,7 +35,7 @@ public class HLAPIBlock extends Block {
     public static class Builder {
         int height;
 
-        protected BID previousHash;
+        protected BID previousHash = BID.INVALID;
         protected MerkleRoot merkleRoot;
         protected int createTime;
         protected List<MerkleTreeNode> transactions = new ArrayList<>();

@@ -19,7 +19,7 @@ import org.hyperledger.merkletree.MerkleRoot;
 
 public abstract class HeaderBuilder<T extends HeaderBuilder<T>> {
     protected int version;
-    protected BID previousID;
+    protected BID previousID = BID.INVALID;
     protected MerkleRoot merkleRoot = MerkleRoot.INVALID;
     protected int createTime;
     protected int difficultyTarget;
