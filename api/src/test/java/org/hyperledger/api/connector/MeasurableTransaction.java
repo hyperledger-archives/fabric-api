@@ -25,16 +25,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.stream.Collectors.toList;
 
 public class MeasurableTransaction {
     private static final Logger log = LoggerFactory.getLogger(MeasurableTransaction.class);
+
+    public static int TIMOUT_SEC = 120;
 
     private static final ThreadFactory threadFactory = new ThreadFactoryBuilder()
             .setDaemon(true)
@@ -44,7 +43,7 @@ public class MeasurableTransaction {
 
     public final Transaction tx;
     public long completionTime;
-    public static AtomicBoolean error = new AtomicBoolean(false);
+    public AtomicBoolean multipleNotification = new AtomicBoolean(false);
     private final Stopwatch stopwatch = Stopwatch.createUnstarted();
     private CompletableFuture<Long> future;
     private final OpenTransactionLimiter limiter;
@@ -55,22 +54,23 @@ public class MeasurableTransaction {
     }
 
     public void send(HLAPI api) throws HLAPIException {
-        future = failAfter(Duration.ofSeconds(30));
+        log.info("Sending transaction {}", tx.getID().toUuidString());
+        future = failAfter(Duration.ofSeconds(TIMOUT_SEC));
         limiter.newTx();
         stopwatch.start();
         api.sendTransaction(tx);
     }
 
     public void complete() {
-        log.info("Complete called in MeasurableTransaction for tx {}", tx.getID());
+        log.info("Complete called for txid={} uuid={}", tx.getID(), tx.getID().toUuidString());
         if (stopwatch.isRunning()) {
             stopwatch.stop();
             completionTime = System.currentTimeMillis();
             future.complete(stopwatch.elapsed(MILLISECONDS));
             limiter.completeTx();
         } else {
-            log.error("Stopwatch was already running");
-            error.set(true);
+            log.error("Listener called multiple times for txid={} uuid={}", tx.getID(), tx.getID().toUuidString());
+            multipleNotification.set(true);
         }
     }
 
@@ -78,20 +78,16 @@ public class MeasurableTransaction {
         return future.get();
     }
 
-    private static CompletableFuture<Long> failAfter(Duration duration) {
+    private CompletableFuture<Long> failAfter(Duration duration) {
         final CompletableFuture<Long> promise = new CompletableFuture<>();
         final Runnable timeoutFn = () -> {
-            promise.completeExceptionally(new TimeoutException("Timeout after " + duration));
+            String message = "Timeout for txid=" + tx.getID() + " uuid=" + tx.getID().toUuidString() + " after " + duration;
+            if (promise.completeExceptionally(new TimeoutException(message))) {
+                log.error(message);
+            }
         };
         scheduler.schedule(timeoutFn, duration.toMillis(), MILLISECONDS);
         return promise;
-    }
-
-    public static CompletableFuture<List<Long>> waitAll(Collection<MeasurableTransaction> txs) {
-        List<CompletableFuture<Long>> futures = txs.stream().map(t -> t.future).collect(toList());
-        CompletableFuture[] futuresArray = futures.toArray(new CompletableFuture[futures.size()]);
-        CompletableFuture<Void> allDoneFuture = CompletableFuture.allOf(futuresArray);
-        return allDoneFuture.thenApply(v -> futures.stream().map(CompletableFuture::join).collect(toList()));
     }
 
 }

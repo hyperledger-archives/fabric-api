@@ -17,6 +17,7 @@ package org.hyperledger.api;
 
 import org.hyperledger.block.BID;
 import org.hyperledger.block.Block;
+import org.hyperledger.block.Header;
 import org.hyperledger.block.HyperledgerHeader;
 import org.hyperledger.merkletree.MerkleRoot;
 import org.hyperledger.merkletree.MerkleTree;
@@ -36,6 +37,7 @@ public class HLAPIBlock extends Block {
         int height;
 
         protected BID previousHash = BID.INVALID;
+        protected Header header;
         protected MerkleRoot merkleRoot;
         protected int createTime;
         protected List<MerkleTreeNode> transactions = new ArrayList<>();
@@ -43,6 +45,11 @@ public class HLAPIBlock extends Block {
 
         public Builder previousHash(BID previousHash) {
             this.previousHash = previousHash;
+            return this;
+        }
+
+        public Builder header(Header header) {
+            this.header = header;
             return this;
         }
 
@@ -66,27 +73,19 @@ public class HLAPIBlock extends Block {
             return this;
         }
 
-        public Builder merkleNodes(MerkleTreeNode... nodes) {
-            Collections.addAll(this.transactions, nodes);
-            return this;
-        }
-
         public Builder height(int height) {
             this.height = height;
             return this;
         }
 
         public HLAPIBlock build() {
-            if (merkleRoot == null)
-                return new HLAPIBlock(
-                        new HLAPIHeader(
-                                new HyperledgerHeader(previousHash, MerkleTree.computeMerkleRoot(transactions), createTime),
-                                height), transactions);
-            else
-                return new HLAPIBlock(
-                        new HLAPIHeader(
-                                new HyperledgerHeader(previousHash, merkleRoot, createTime),
-                                height), transactions);
+            if (header == null) {
+                if (merkleRoot == null) {
+                    merkleRoot = MerkleTree.computeMerkleRoot(transactions);
+                }
+                header = new HyperledgerHeader(previousHash, merkleRoot, createTime);
+            }
+            return new HLAPIBlock(new HLAPIHeader(header, height), transactions);
         }
     }
 
@@ -102,7 +101,7 @@ public class HLAPIBlock extends Block {
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<? extends HLAPITransaction> getTransactions() {
-        return (List<? extends HLAPITransaction>) super.getTransactions();
+    public List<HLAPITransaction> getTransactions() {
+        return (List<HLAPITransaction>) super.getTransactions();
     }
 }
