@@ -19,6 +19,7 @@ package org.hyperledger.api.connector;
 import com.google.common.base.Stopwatch;
 import org.hyperledger.api.HLAPI;
 import org.hyperledger.api.HLAPIException;
+import org.hyperledger.api.RejectListener;
 import org.hyperledger.api.TransactionListener;
 import org.hyperledger.transaction.TID;
 import org.hyperledger.transaction.Transaction;
@@ -30,8 +31,10 @@ import org.junit.Test;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class PerfTest {
 
@@ -43,8 +46,11 @@ public class PerfTest {
 //    private final HLAPI api = new GRPCClient("localhost", 30303, 31315);
     private final HLAPI api = new DummyFabric();
     private final TransactionListener listener;
+    private final RejectListener rejectionListener;
     private final List<MeasurableTransaction> txs;
     private final Map<TID, MeasurableTransaction> txMap;
+    private final AtomicInteger rejectionCounter = new AtomicInteger(0);
+    private int timoutCounter;
 
     public PerfTest() {
         OpenTransactionLimiter limiter = new OpenTransactionLimiter(NR_OF_CONCURRENT_TRANSACTIONS);
@@ -59,11 +65,13 @@ public class PerfTest {
         txMap = Collections.unmodifiableMap(transactionMap);
 
         listener = t -> txMap.get(t.getID()).complete();
+        rejectionListener = (command, hash, reason, rejectionCode) -> rejectionCounter.incrementAndGet();
     }
 
     @Before
     public void setUp() throws HLAPIException {
         api.registerTransactionListener(listener);
+        api.registerRejectListener(rejectionListener);
     }
 
     @After
@@ -77,34 +85,66 @@ public class PerfTest {
 
         for (MeasurableTransaction t : txs) {
             t.send(api);
-            assertFalse(MeasurableTransaction.error.get());
         }
-        List<Long> results = MeasurableTransaction.waitAll(txs).get();
+        List<Long> results = getResults();
 
         totalTime.stop();
 
-        checkTransactionsAdded();
-        printResults(totalTime, results);
+        int notFound = checkTransactionsAdded();
+        long multipleNotifications = getNrOfMultipleNotification();
+
+        printResults(totalTime, results, multipleNotifications, notFound);
     }
 
-    private void checkTransactionsAdded() throws HLAPIException {
+    private List<Long> getResults() throws ExecutionException, InterruptedException {
+        List<Long> results = new ArrayList<>();
+        timoutCounter = 0;
+        for (MeasurableTransaction t : txs) {
+            try {
+                results.add(t.get());
+            } catch (InterruptedException | ExecutionException e) {
+                if (e.getCause() instanceof TimeoutException) {
+                    timoutCounter++;
+                    results.add(MeasurableTransaction.TIMOUT_SEC * 1000L);
+                } else {
+                    throw e;
+                }
+            }
+        }
+        return results;
+    }
+
+    private long getNrOfMultipleNotification() {
+        return txs.stream().filter(tx -> tx.multipleNotification.get()).count();
+    }
+
+    private int checkTransactionsAdded() throws HLAPIException {
+        int notFound = 0;
         for (MeasurableTransaction t : txs) {
             TID id = t.tx.getID();
             Transaction storedTx = api.getTransaction(id);
-            assertNotNull("No transaction found with the id " + id, storedTx);
-            assertEquals(t.tx, storedTx);
+            if (storedTx != null) {
+                assertEquals(t.tx, storedTx);
+            } else {
+                notFound++;
+            }
         }
+        return notFound;
     }
 
-    private void printResults(Stopwatch totalTime, List<Long> results) {
-        System.out.format("====== Test results ======\n");
+    private void printResults(Stopwatch totalTime, List<Long> results, long multipleNotifications, int notFound) {
+        println("====== Test results ======\n");
 
         double totalSeconds = totalTime.elapsed(TimeUnit.MILLISECONDS) / 1000.0;
-        System.out.format("Total: %d transactions in %.2f sec\n", SIZE, totalSeconds);
-        System.out.format("Average transaction/s: %.2f\n", SIZE / totalSeconds);
-        System.out.format("Average transaction process time: %.2f ms\n", avg(results));
+        println("Total: %d transactions in %.2f sec", SIZE, totalSeconds);
+        println("Average transaction/s: %.2f", SIZE / totalSeconds);
+        println("Average transaction process time: %.2f ms", avg(results));
+        println("Listener not called for %d transactions", timoutCounter);
+        println("Listener called multiple times for %d transactions", multipleNotifications);
+        println("%d transactions not found in the ledger", notFound);
+        println("%d transactions rejected", rejectionCounter.get());
 
-        System.out.format("Distribution:\n");
+        println("Distribution:");
         for (int i = 0; i < NR_OF_GROUPS; i++) {
             int lowerBound = i * CHUNK_SIZE;
             int upperBound = (i + 1) * CHUNK_SIZE;
@@ -113,8 +153,12 @@ public class PerfTest {
             double txsPerSec = (double) CHUNK_SIZE / timeDiffSec;
             double processTime = avg(results.subList(lowerBound, upperBound));
 
-            System.out.format("%6d - %6d:\ttx/sec=%5.2f\tavg_tx_time=%5.2f\n", lowerBound, upperBound, txsPerSec, processTime);
+            println("%6d - %6d:\ttx/sec=%5.2f\tavg_tx_time=%5.2f ms", lowerBound, upperBound, txsPerSec, processTime);
         }
+    }
+
+    private void println(String format, Object... args) {
+        System.out.format(format + "\n", args);
     }
 
     private double avg(List<Long> l) {
